@@ -1,0 +1,38 @@
+# ROS2 build artifacts
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Rosbag data 
+*.db3
+*.mcap
+*.bag
+rosbag2_*/
+
+# Gazebo
+.gazebo/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+*.log
+/tmp/
+
+# Sensitive
+*.pem
+*.key
