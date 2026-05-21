@@ -42,14 +42,21 @@ controlled load experiments rather than headline-grabbing autonomy.
 Other simulators may be added where they fit better (e.g., MuJoCo for
 quadruped contact dynamics) — noted per scene.
 
-## Related work
+## On Gazebo Classic and EOL
 
-This repository is part of a research arc around distributed robotics
-reliability:
+Gazebo Classic 11 reached end-of-life in January 2025. This repository
+intentionally targets Classic for the following reasons:
 
-- [temporis_ros2](https://github.com/Hippythalamus/temporis_ros2) —
-  calibrated transport latency model for ROS2/Zenoh systems
+- Stable, well-documented integration with ROS2 Humble (LTS until May 2027)
+- Lower resource requirements — important for development and reproduction
+  on machines without dedicated GPUs
+- Existing ecosystem of robot models, plugins, and worlds remains the largest
 
+Migration to Gazebo Harmonic/Ionic is planned as a separate effort once
+all four scenes are stable on Classic. The xacro structure here is
+written with that migration in mind: physical descriptions are isolated
+from Gazebo-specific blocks (see scout_mini.gazebo.xacro vs
+scout_mini.urdf.xacro), so only the latter needs to be rewritten.
 ## License
 
 Apache License 2.0

@@ -112,5 +112,6 @@
   <xacro:wheel prefix="front_right" x_offset="${ wheelbase/2}" y_offset="${-track_width/2}"/>
   <xacro:wheel prefix="rear_left"   x_offset="${-wheelbase/2}" y_offset="${ track_width/2}"/>
   <xacro:wheel prefix="rear_right"  x_offset="${-wheelbase/2}" y_offset="${-track_width/2}"/>
+  <xacro:include filename="$(find scout_mini_description)/urdf/scout_mini.gazebo.xacro"/>
 
 </robot>
