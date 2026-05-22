@@ -44,12 +44,14 @@ quadruped contact dynamics) — noted per scene.
 
 ## Repository structure
 
+```
 field_robots_lab/
 ├── src/
 │   ├── scout_mini_description/   # URDF, Gazebo plugins, world, launch
 │   └── telemetry_recorder/        # Recording wrapper + metadata
 ├── docs/                          # Per-scene documentation (planned)
 └── README.md
+```
 
 Scene-specific files (worlds, launch files) currently live inside the
 robot description package. They will be reorganized into a top-level
@@ -113,11 +115,13 @@ on data streams) and writes experiment metadata alongside the bag.
 
 Output goes to `~/field_robots_lab_experiments/<experiment_name>/`:
 
+```
 my_first_run/
 ├── bag/
 │   ├── bag_0.mcap.zstd          # compressed mcap rosbag
 │   └── metadata.yaml             # rosbag2-generated info
 └── metadata.yaml                 # experiment metadata (start, stop, topics)
+```
 
 Stop the recorder with `Ctrl+C`. The metadata file is finalized with
 the stop timestamp.
