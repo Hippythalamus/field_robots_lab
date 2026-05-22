@@ -1,0 +1,39 @@
+# Topics to record for Scene 1: Scout Mini in warehouse
+# Used by telemetry_recorder.recorder_node
+
+experiment:
+  scene: "01_scout_mini_warehouse"
+  robot: "scout_mini"
+
+topics:
+  - name: /imu
+    description: "IMU at 100 Hz on imu_link"
+    expected_rate_hz: 100
+
+  - name: /scan
+    description: "2D Lidar at 10 Hz, 360 deg"
+    expected_rate_hz: 10
+
+  - name: /odom
+    description: "Wheel odometry from skid_steer plugin"
+    expected_rate_hz: 50
+
+  - name: /cmd_vel
+    description: "Velocity commands (sparse, only when teleop active)"
+    expected_rate_hz: null
+
+  - name: /tf
+    description: "TF tree updates"
+    expected_rate_hz: null
+
+  - name: /joint_states
+    description: "Wheel joint states"
+    expected_rate_hz: 50
+
+  - name: /clock
+    description: "Simulation clock"
+    expected_rate_hz: 1000
+
+storage:
+  format: mcap
+  compression: zstd
