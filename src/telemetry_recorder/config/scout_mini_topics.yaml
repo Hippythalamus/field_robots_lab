@@ -32,8 +32,7 @@ topics:
 
   - name: /clock
     description: "Simulation clock"
-    expected_rate_hz: 1000
+    expected_rate_hz: 10
 
 storage:
   format: mcap
-  compression: zstd

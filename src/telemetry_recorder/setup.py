@@ -27,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
             'recorder_node = telemetry_recorder.recorder_node:main',
+            'analyzer = telemetry_recorder.analyzer:main',
         ],
     },
 )

@@ -20,6 +20,7 @@ import sys
 import signal
 import subprocess
 import datetime
+import shutil
 from pathlib import Path
 
 import yaml
@@ -57,6 +58,11 @@ class RecorderNode(Node):
 
         self.exp_dir = Path(self.output_dir) / self.experiment_name
         self.exp_dir.mkdir(parents=True, exist_ok=True)
+        # Copy topics config into experiment dir for post-hoc analysis
+        shutil.copy(
+            self.topics_config_path,
+            self.exp_dir / 'topics_config.yaml'
+        )
 
         # Persist metadata
         self.metadata = {
