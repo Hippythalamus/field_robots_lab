@@ -113,68 +113,26 @@
   <xacro:wheel prefix="rear_left"   x_offset="${-wheelbase/2}" y_offset="${ track_width/2}"/>
   <xacro:wheel prefix="rear_right"  x_offset="${-wheelbase/2}" y_offset="${-track_width/2}"/>
 
-  <!-- IMU sensor                                                      -->
-  <!-- Mounted on the top center of base_link                          -->
-  <link name="imu_link">
-    <visual>
-      <geometry>
-        <box size="0.04 0.04 0.02"/>
-      </geometry>
-      <material name="imu_blue">
-        <color rgba="0.0 0.3 0.8 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry>
-        <box size="0.04 0.04 0.02"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="0.05"/>
-      <inertia
-        ixx="1e-5" ixy="0.0" ixz="0.0"
-        iyy="1e-5" iyz="0.0"
-        izz="1e-5"/>
-    </inertial>
-  </link>
-
-  <joint name="imu_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="imu_link"/>
-    <origin xyz="0 0 ${base_height + 0.01}" rpy="0 0 0"/>
-  </joint>
-
-  <!-- 2D Lidar (LSLIDAR N10-class)                                    -->
-  <!-- Mounted on the top of base_link, forward of IMU                 -->
-  <link name="lidar_link">
-    <visual>
-      <geometry>
-        <cylinder radius="0.04" length="0.06"/>
-      </geometry>
-      <material name="lidar_dark">
-        <color rgba="0.2 0.2 0.2 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <geometry>
-        <cylinder radius="0.04" length="0.06"/>
-      </geometry>
-    </collision>
-    <inertial>
-      <mass value="0.2"/>
-      <inertia
-        ixx="2e-4" ixy="0.0" ixz="0.0"
-        iyy="2e-4" iyz="0.0"
-        izz="1e-4"/>
-    </inertial>
-  </link>
-
-  <joint name="lidar_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="lidar_link"/>
-    <origin xyz="0.20 0 ${base_height + 0.03}" rpy="0 0 0"/>
-  </joint>
 
   <xacro:include filename="$(find scout_mini_description)/urdf/scout_mini.gazebo.xacro"/>
+
+
+  <!-- ============================================================== -->
+  <!-- Sensor modules                                                  -->
+  <!-- ============================================================== -->
+  <xacro:include filename="$(find scout_mini_description)/urdf/sensors/imu.xacro"/>
+  <xacro:include filename="$(find scout_mini_description)/urdf/sensors/lidar_2d.xacro"/>
+
+  <xacro:imu_sensor
+    name="imu"
+    parent="base_link"
+    xyz="0 0 ${base_height + 0.01}"
+    rpy="0 0 0"/>
+
+  <xacro:lidar_2d_sensor
+    name="lidar"
+    parent="base_link"
+    xyz="0.20 0 ${base_height + 0.03}"
+    rpy="0 0 0"/>
 
 </robot>
