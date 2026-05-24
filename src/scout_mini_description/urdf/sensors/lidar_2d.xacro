@@ -1,24 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- ============================================================== -->
-  <!-- 2D Lidar sensor module                                          -->
-  <!--                                                                 -->
-  <!-- Self-contained: link, joint, Gazebo plugin in one macro.        -->
-  <!--                                                                 -->
-  <!-- Parameters:                                                     -->
-  <!--   name           : unique name for this sensor instance        -->
-  <!--   parent         : link to attach to                            -->
-  <!--   xyz            : mount position relative to parent            -->
-  <!--   rpy            : mount orientation relative to parent         -->
-  <!--   samples        : angular samples per scan (default 360)       -->
-  <!--   update_rate    : scan rate in Hz (default 10)                 -->
-  <!--   min_range      : minimum range in m (default 0.12)            -->
-  <!--   max_range      : maximum range in m (default 12.0)            -->
-  <!--   noise_stddev   : range noise std dev (default 0.01)           -->
-  <!--   topic          : output topic name (default /scan)            -->
-  <!--   visualize      : show rays in Gazebo (default true)           -->
-  <!-- ============================================================== -->
   <xacro:macro name="lidar_2d_sensor" params="name parent xyz rpy
                                                samples:=360
                                                update_rate:=10
@@ -26,9 +8,9 @@
                                                max_range:=12.0
                                                noise_stddev:=0.01
                                                topic:=scan
+                                               namespace:=''
                                                visualize:=true">
 
-    <!-- Physical link -->
     <link name="${name}_link">
       <visual>
         <geometry>
@@ -58,7 +40,6 @@
       <origin xyz="${xyz}" rpy="${rpy}"/>
     </joint>
 
-    <!-- Gazebo 2D Lidar plugin -->
     <gazebo reference="${name}_link">
       <sensor name="${name}_sensor" type="ray">
         <always_on>true</always_on>
@@ -87,7 +68,7 @@
         </ray>
         <plugin filename="libgazebo_ros_ray_sensor.so" name="${name}_plugin">
           <ros>
-            <namespace>/</namespace>
+            <namespace>${namespace}</namespace>
             <remapping>~/out:=${topic}</remapping>
           </ros>
           <output_type>sensor_msgs/LaserScan</output_type>

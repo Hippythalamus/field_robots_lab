@@ -1,28 +1,13 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- ============================================================== -->
-  <!-- IMU sensor module                                               -->
-  <!--                                                                 -->
-  <!-- Self-contained: link, joint, Gazebo plugin in one macro.        -->
-  <!--                                                                 -->
-  <!-- Parameters:                                                     -->
-  <!--   name          : unique name for this sensor instance         -->
-  <!--   parent        : link to attach to                             -->
-  <!--   xyz           : mount position relative to parent             -->
-  <!--   rpy           : mount orientation relative to parent          -->
-  <!--   rate          : publish rate in Hz (default 100)              -->
-  <!--   gyro_stddev   : gyroscope noise std dev (default 2e-4)        -->
-  <!--   accel_stddev  : accelerometer noise std dev (default 1.7e-2)  -->
-  <!--   topic         : output topic name (default /imu)              -->
-  <!-- ============================================================== -->
   <xacro:macro name="imu_sensor" params="name parent xyz rpy
                                           rate:=100
                                           gyro_stddev:=0.0002
                                           accel_stddev:=0.017
-                                          topic:=imu">
+                                          topic:=imu
+                                          namespace:=''">
 
-    <!-- Physical link -->
     <link name="${name}_link">
       <visual>
         <geometry>
@@ -52,7 +37,6 @@
       <origin xyz="${xyz}" rpy="${rpy}"/>
     </joint>
 
-    <!-- Gazebo IMU plugin -->
     <gazebo reference="${name}_link">
       <sensor name="${name}_sensor" type="imu">
         <always_on>true</always_on>
@@ -61,7 +45,7 @@
         <topic>__default_topic__</topic>
         <plugin filename="libgazebo_ros_imu_sensor.so" name="${name}_plugin">
           <ros>
-            <namespace>/</namespace>
+            <namespace>${namespace}</namespace>
             <remapping>~/out:=${topic}</remapping>
           </ros>
           <initial_orientation_as_reference>false</initial_orientation_as_reference>
