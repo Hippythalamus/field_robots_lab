@@ -1,82 +1,87 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Gazebo material colors                                         -->
-  <gazebo reference="base_link">
-    <material>Gazebo/Yellow</material>
-  </gazebo>
-
-  <gazebo reference="front_left_wheel_link">
-    <material>Gazebo/Black</material>
-    <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
-    <kp>1000000.0</kp>
-    <kd>100.0</kd>
-  </gazebo>
-
-  <gazebo reference="front_right_wheel_link">
-    <material>Gazebo/Black</material>
-    <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
-    <kp>1000000.0</kp>
-    <kd>100.0</kd>
-  </gazebo>
-
-  <gazebo reference="rear_left_wheel_link">
-    <material>Gazebo/Black</material>
-    <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
-    <kp>1000000.0</kp>
-    <kd>100.0</kd>
-  </gazebo>
-
-  <gazebo reference="rear_right_wheel_link">
-    <material>Gazebo/Black</material>
-    <mu1>1.0</mu1>
-    <mu2>1.0</mu2>
-    <kp>1000000.0</kp>
-    <kd>100.0</kd>
-  </gazebo>
-
   <!-- ============================================================== -->
-  <!-- Skid-steer drive controller                                    -->
-  <!-- Drives all four wheels from /cmd_vel, publishes /odom + TF     -->
+  <!-- Gazebo macro: per-robot material + skid-steer plugin            -->
   <!-- ============================================================== -->
-  <gazebo>
-    <plugin name="skid_steer_controller" filename="libgazebo_ros_diff_drive.so">
-      <ros>
-        <namespace>/</namespace>
-        <remapping>cmd_vel:=cmd_vel</remapping>
-        <remapping>odom:=odom</remapping>
-      </ros>
+  <xacro:macro name="scout_mini_gazebo" params="prefix:=''">
 
-      <update_rate>50</update_rate>
+    <!-- Material colors -->
+    <gazebo reference="${prefix}base_link">
+      <material>Gazebo/Yellow</material>
+    </gazebo>
 
-      <num_wheel_pairs>2</num_wheel_pairs>
+    <gazebo reference="${prefix}front_left_wheel_link">
+      <material>Gazebo/Black</material>
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+    </gazebo>
 
-      <left_joint>front_left_wheel_joint</left_joint>
-      <right_joint>front_right_wheel_joint</right_joint>
-      <left_joint>rear_left_wheel_joint</left_joint>
-      <right_joint>rear_right_wheel_joint</right_joint>
+    <gazebo reference="${prefix}front_right_wheel_link">
+      <material>Gazebo/Black</material>
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+    </gazebo>
 
-      <wheel_separation>0.490</wheel_separation>
-      <wheel_separation>0.490</wheel_separation>
-      <wheel_diameter>0.180</wheel_diameter>
-      <wheel_diameter>0.180</wheel_diameter>
+    <gazebo reference="${prefix}rear_left_wheel_link">
+      <material>Gazebo/Black</material>
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+    </gazebo>
 
-      <max_wheel_torque>50.0</max_wheel_torque>
-      <max_wheel_acceleration>2.0</max_wheel_acceleration>
+    <gazebo reference="${prefix}rear_right_wheel_link">
+      <material>Gazebo/Black</material>
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
+      <kp>1000000.0</kp>
+      <kd>100.0</kd>
+    </gazebo>
 
-      <publish_odom>true</publish_odom>
-      <publish_odom_tf>true</publish_odom_tf>
-      <publish_wheel_tf>true</publish_wheel_tf>
+    <!-- ============================================================== -->
+    <!-- Skid-steer drive controller                                    -->
+    <!-- ============================================================== -->
+    <gazebo>
+      <plugin name="${prefix}skid_steer_controller" filename="libgazebo_ros_diff_drive.so">
+        <ros>
+          <namespace>/</namespace>
+          <remapping>cmd_vel:=cmd_vel</remapping>
+          <remapping>odom:=odom</remapping>
+        </ros>
 
-      <odometry_frame>odom</odometry_frame>
-      <robot_base_frame>base_footprint</robot_base_frame>
+        <update_rate>50</update_rate>
 
-      <odometry_source>1</odometry_source>
-    </plugin>
-  </gazebo>
+        <num_wheel_pairs>2</num_wheel_pairs>
 
+        <left_joint>${prefix}front_left_wheel_joint</left_joint>
+        <right_joint>${prefix}front_right_wheel_joint</right_joint>
+        <left_joint>${prefix}rear_left_wheel_joint</left_joint>
+        <right_joint>${prefix}rear_right_wheel_joint</right_joint>
+
+        <wheel_separation>0.490</wheel_separation>
+        <wheel_separation>0.490</wheel_separation>
+        <wheel_diameter>0.180</wheel_diameter>
+        <wheel_diameter>0.180</wheel_diameter>
+
+        <max_wheel_torque>50.0</max_wheel_torque>
+        <max_wheel_acceleration>2.0</max_wheel_acceleration>
+
+        <publish_odom>true</publish_odom>
+        <publish_odom_tf>true</publish_odom_tf>
+        <publish_wheel_tf>true</publish_wheel_tf>
+
+        <odometry_frame>${prefix}odom</odometry_frame>
+        <robot_base_frame>${prefix}base_footprint</robot_base_frame>
+
+        <odometry_source>1</odometry_source>
+      </plugin>
+    </gazebo>
+
+  </xacro:macro>
 
 </robot>

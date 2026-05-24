@@ -16,7 +16,6 @@
   <xacro:property name="wheelbase"       value="0.452"/>
   <xacro:property name="track_width"     value="0.490"/>
 
-  <!-- Wheel vertical offset: bottom of base sits above ground by wheel_radius -->
   <xacro:property name="base_z_offset" value="${wheel_radius}"/>
 
   <!-- ============================================================== -->
@@ -43,50 +42,22 @@
   </xacro:macro>
 
   <!-- ============================================================== -->
-  <!-- base_footprint: virtual frame on the ground                    -->
+  <!-- Sensor modules                                                  -->
   <!-- ============================================================== -->
-  <link name="base_footprint"/>
-
-  <!-- ============================================================== -->
-  <!-- base_link: main body                                            -->
-  <!-- ============================================================== -->
-  <link name="base_link">
-    <visual>
-      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
-      <geometry>
-        <box size="${base_length} ${base_width} ${base_height}"/>
-      </geometry>
-      <material name="scout_yellow">
-        <color rgba="0.95 0.75 0.05 1.0"/>
-      </material>
-    </visual>
-    <collision>
-      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
-      <geometry>
-        <box size="${base_length} ${base_width} ${base_height}"/>
-      </geometry>
-    </collision>
-    <xacro:box_inertia m="${base_mass}" x="${base_length}" y="${base_width}" z="${base_height}"/>
-  </link>
-
-  <joint name="base_footprint_to_base_link" type="fixed">
-    <parent link="base_footprint"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 ${base_z_offset}" rpy="0 0 0"/>
-  </joint>
+  <xacro:include filename="$(find scout_mini_description)/urdf/sensors/imu.xacro"/>
+  <xacro:include filename="$(find scout_mini_description)/urdf/sensors/lidar_2d.xacro"/>
 
   <!-- ============================================================== -->
   <!-- Wheel macro                                                     -->
-  <!-- Reused for all four wheels                                      -->
   <!-- ============================================================== -->
-  <xacro:macro name="wheel" params="prefix x_offset y_offset">
-    <link name="${prefix}_wheel_link">
+  <xacro:macro name="wheel" params="prefix wheel_name x_offset y_offset">
+    <link name="${prefix}${wheel_name}_wheel_link">
       <visual>
         <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
         <geometry>
           <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
         </geometry>
-        <material name="wheel_black">
+        <material name="wheel_black_${prefix}${wheel_name}">
           <color rgba="0.1 0.1 0.1 1.0"/>
         </material>
       </visual>
@@ -99,40 +70,93 @@
       <xacro:cylinder_inertia m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
     </link>
 
-    <joint name="${prefix}_wheel_joint" type="continuous">
-      <parent link="base_link"/>
-      <child link="${prefix}_wheel_link"/>
+    <joint name="${prefix}${wheel_name}_wheel_joint" type="continuous">
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}${wheel_name}_wheel_link"/>
       <origin xyz="${x_offset} ${y_offset} 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
     </joint>
   </xacro:macro>
 
-  <!-- Instantiate four wheels -->
-  <xacro:wheel prefix="front_left"  x_offset="${ wheelbase/2}" y_offset="${ track_width/2}"/>
-  <xacro:wheel prefix="front_right" x_offset="${ wheelbase/2}" y_offset="${-track_width/2}"/>
-  <xacro:wheel prefix="rear_left"   x_offset="${-wheelbase/2}" y_offset="${ track_width/2}"/>
-  <xacro:wheel prefix="rear_right"  x_offset="${-wheelbase/2}" y_offset="${-track_width/2}"/>
+  <!-- ============================================================== -->
+  <!-- Main robot macro                                                -->
+  <!-- ============================================================== -->
+  <xacro:macro name="scout_mini_robot" params="prefix:=''
+                                                use_imu:=true
+                                                use_lidar:=true
+                                                lidar_samples:=360
+                                                imu_rate:=100">
 
+    <!-- base_footprint -->
+    <link name="${prefix}base_footprint"/>
 
+    <!-- base_link -->
+    <link name="${prefix}base_link">
+      <visual>
+        <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${base_length} ${base_width} ${base_height}"/>
+        </geometry>
+        <material name="scout_yellow_${prefix}">
+          <color rgba="0.95 0.75 0.05 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+        <geometry>
+          <box size="${base_length} ${base_width} ${base_height}"/>
+        </geometry>
+      </collision>
+      <xacro:box_inertia m="${base_mass}" x="${base_length}" y="${base_width}" z="${base_height}"/>
+    </link>
+
+    <joint name="${prefix}base_footprint_to_base_link" type="fixed">
+      <parent link="${prefix}base_footprint"/>
+      <child link="${prefix}base_link"/>
+      <origin xyz="0 0 ${base_z_offset}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Four wheels -->
+    <xacro:wheel prefix="${prefix}" wheel_name="front_left"  x_offset="${ wheelbase/2}" y_offset="${ track_width/2}"/>
+    <xacro:wheel prefix="${prefix}" wheel_name="front_right" x_offset="${ wheelbase/2}" y_offset="${-track_width/2}"/>
+    <xacro:wheel prefix="${prefix}" wheel_name="rear_left"   x_offset="${-wheelbase/2}" y_offset="${ track_width/2}"/>
+    <xacro:wheel prefix="${prefix}" wheel_name="rear_right"  x_offset="${-wheelbase/2}" y_offset="${-track_width/2}"/>
+
+    <!-- Conditional sensors -->
+    <xacro:if value="${use_imu}">
+      <xacro:imu_sensor
+        name="${prefix}imu"
+        parent="${prefix}base_link"
+        xyz="0 0 ${base_height + 0.01}"
+        rpy="0 0 0"
+        rate="${imu_rate}"
+        topic="imu"/>
+    </xacro:if>
+
+    <xacro:if value="${use_lidar}">
+      <xacro:lidar_2d_sensor
+        name="${prefix}lidar"
+        parent="${prefix}base_link"
+        xyz="0.20 0 ${base_height + 0.03}"
+        rpy="0 0 0"
+        samples="${lidar_samples}"
+        topic="scan"/>
+    </xacro:if>
+
+    <!-- Gazebo (per-instance: material + plugins) -->
+    <xacro:scout_mini_gazebo prefix="${prefix}"/>
+
+  </xacro:macro>
+
+  <!-- ============================================================== -->
+  <!-- Include the Gazebo macro definition                             -->
+  <!-- ============================================================== -->
   <xacro:include filename="$(find scout_mini_description)/urdf/scout_mini.gazebo.xacro"/>
 
-
   <!-- ============================================================== -->
-  <!-- Sensor modules                                                  -->
+  <!-- Instantiate one robot with empty prefix (Scene 1 compatibility) -->
+  <!-- This is overridden when launched via spawn_robot.launch.py      -->
   <!-- ============================================================== -->
-  <xacro:include filename="$(find scout_mini_description)/urdf/sensors/imu.xacro"/>
-  <xacro:include filename="$(find scout_mini_description)/urdf/sensors/lidar_2d.xacro"/>
-
-  <xacro:imu_sensor
-    name="imu"
-    parent="base_link"
-    xyz="0 0 ${base_height + 0.01}"
-    rpy="0 0 0"/>
-
-  <xacro:lidar_2d_sensor
-    name="lidar"
-    parent="base_link"
-    xyz="0.20 0 ${base_height + 0.03}"
-    rpy="0 0 0"/>
+  <xacro:scout_mini_robot prefix=""/>
 
 </robot>
