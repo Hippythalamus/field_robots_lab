@@ -1,0 +1,78 @@
+# Topics to record for Scene 2: Heterogeneous fleet of 3 Scout Minis
+# Used by telemetry_recorder.recorder_node
+
+experiment:
+  scene: "02_heterogeneous_fleet"
+  robot: "scout_mini_x3"
+
+topics:
+  # === robot_0: full sensor suite ===
+  - name: /robot_0/imu
+    description: "robot_0 IMU at 100 Hz"
+    expected_rate_hz: 100
+
+  - name: /robot_0/scan
+    description: "robot_0 Lidar 360 samples at 10 Hz"
+    expected_rate_hz: 10
+
+  - name: /robot_0/odom
+    description: "robot_0 odometry"
+    expected_rate_hz: 50
+
+  - name: /robot_0/cmd_vel
+    description: "robot_0 velocity commands"
+    expected_rate_hz: null
+
+  - name: /robot_0/joint_states
+    description: "robot_0 wheel joint states"
+    expected_rate_hz: 50
+
+  # === robot_1: reduced lidar ===
+  - name: /robot_1/imu
+    description: "robot_1 IMU at 100 Hz"
+    expected_rate_hz: 100
+
+  - name: /robot_1/scan
+    description: "robot_1 Lidar 180 samples at 10 Hz"
+    expected_rate_hz: 10
+
+  - name: /robot_1/odom
+    description: "robot_1 odometry"
+    expected_rate_hz: 50
+
+  - name: /robot_1/cmd_vel
+    description: "robot_1 velocity commands"
+    expected_rate_hz: null
+
+  - name: /robot_1/joint_states
+    description: "robot_1 wheel joint states"
+    expected_rate_hz: 50
+
+  # === robot_2: IMU only ===
+  - name: /robot_2/imu
+    description: "robot_2 IMU at 100 Hz (no lidar)"
+    expected_rate_hz: 100
+
+  - name: /robot_2/odom
+    description: "robot_2 odometry"
+    expected_rate_hz: 50
+
+  - name: /robot_2/cmd_vel
+    description: "robot_2 velocity commands"
+    expected_rate_hz: null
+
+  - name: /robot_2/joint_states
+    description: "robot_2 wheel joint states"
+    expected_rate_hz: 50
+
+  # === shared ===
+  - name: /tf
+    description: "TF tree updates from all robots"
+    expected_rate_hz: null
+
+  - name: /clock
+    description: "Simulation clock"
+    expected_rate_hz: 10
+
+storage:
+  format: mcap
