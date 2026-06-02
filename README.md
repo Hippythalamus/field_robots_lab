@@ -22,7 +22,7 @@ controlled load experiments rather than headline-grabbing autonomy.
 | # | Robot | Scenario | Status |
 |---|-------|----------|--------|
 | 1 | Scout Mini (AgileX) | warehouse navigation baseline | working — see Quick Start |
-| 2 | Heterogeneous fleet | 2–3 platforms, coordination scenario | planned |
+| 2 | Heterogeneous fleet | three Scout Minis with mixed sensor configs | working — see Quick Start |
 | 3 | DJI M350-class surrogate (PX4 SITL) | pipeline inspection | planned |
 | 4 | Quadruped (Go2 / ANYmal-class) | indoor inspection | planned |
 
@@ -31,7 +31,7 @@ controlled load experiments rather than headline-grabbing autonomy.
 - Not a tutorial repo — assumes ROS2 working knowledge
 - Not a Nav2/MoveIt showcase — scenes are deliberately minimal in autonomy
 - Not a benchmark suite — scenes are research stands, not standardized tests
-- Not production-ready — research prototype, see Limitations section
+- Not production-ready — research prototype, see Known limitations
 
 ## Stack
 
@@ -112,9 +112,16 @@ field_robots_lab/
 ├── docs/                          # Per-scene documentation (planned)
 └── README.md
 
+Sensors are isolated into parameterized xacro macros
+(`urdf/sensors/imu.xacro`, `urdf/sensors/lidar_2d.xacro`), so each
+robot instance can be configured with different sensor profiles
+without touching the base URDF. The main robot xacro accepts
+`use_imu`, `use_lidar`, `lidar_samples`, `imu_rate`, and `namespace`
+as launch-supplied arguments.
+
 Scene-specific files (worlds, launch files) currently live inside the
 robot description package. They will be reorganized into a top-level
-`scenes/` directory once a second scene is added.
+`scenes/` directory in a future revision.
 
 ## Quick Start
 
@@ -136,9 +143,9 @@ source install/setup.bash
 ros2 launch scout_mini_description gazebo.launch.py
 ```
 
-This spawns a Scout Mini in a 20×20 m enclosed warehouse with six static
-obstacles. Wait ~30 seconds for Gazebo to load (longer on CPU-only
-machines). The robot publishes:
+This spawns one Scout Mini in a 20×20 m enclosed warehouse with six
+static obstacles. Wait ~30 seconds for Gazebo to load (longer on
+CPU-only machines). The robot publishes:
 
 - `/imu` at 100 Hz
 - `/scan` (2D lidar) at 10 Hz, 360°, 0.12–12 m range
@@ -146,33 +153,63 @@ machines). The robot publishes:
 - `/joint_states` for wheel positions
 - `/tf`, `/tf_static`
 
+### Run Scene 2: Heterogeneous fleet
+
+```bash
+ros2 launch scout_mini_description fleet.launch.py
+```
+
+This spawns three Scout Minis sharing one Gazebo simulation, each in
+its own ROS2 namespace:
+
+- `robot_0` — full sensor suite (IMU 100 Hz + Lidar 360 samples)
+- `robot_1` — reduced lidar resolution (IMU 100 Hz + Lidar 180 samples)
+- `robot_2` — IMU only, no lidar
+
+All telemetry is published under per-robot namespaces:
+`/robot_0/imu`, `/robot_0/scan`, `/robot_0/odom`, `/robot_0/cmd_vel`,
+and the equivalents for `robot_1` and `robot_2` (no `/robot_2/scan`).
+
 ### Drive the robot
 
 ```bash
-# Terminal 2 — keyboard teleop (hold keys)
-sudo apt install ros-humble-teleop-twist-keyboard  # if not installed
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
-```
-
-Or publish to `/cmd_vel` directly:
-
-```bash
+# Scene 1: publishes to /cmd_vel
 ros2 topic pub --rate 10 /cmd_vel geometry_msgs/msg/Twist \
   "{linear: {x: 0.4}, angular: {z: 0.2}}"
+
+# Scene 2: publish to per-robot namespace
+ros2 topic pub --rate 10 /robot_0/cmd_vel geometry_msgs/msg/Twist \
+  "{linear: {x: 0.3}, angular: {z: 0.1}}"
+```
+
+Or use keyboard teleop (works for Scene 1; for Scene 2 add `--ros-args
+-r cmd_vel:=/robot_0/cmd_vel` to target a specific robot):
+
+```bash
+sudo apt install ros-humble-teleop-twist-keyboard
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
 ### Record telemetry
 
+The recorder uses YAML configs to declare which topics to record per
+scene. Scene 1 uses `scout_mini_topics.yaml` (the default); Scene 2
+uses `fleet_topics.yaml`.
+
 ```bash
-# Terminal 3 — record an experiment
+# Scene 1
 ros2 launch telemetry_recorder recorder.launch.py \
-  experiment_name:=my_first_run
+  experiment_name:=scene1_run_01
+
+# Scene 2 — explicitly pass the fleet config
+ros2 launch telemetry_recorder recorder.launch.py \
+  topics_config:=$(ros2 pkg prefix telemetry_recorder)/share/telemetry_recorder/config/fleet_topics.yaml \
+  experiment_name:=scene2_run_01
 ```
 
-The recorder spawns `ros2 bag record` as a subprocess (no Python overhead
-on data streams) and writes experiment metadata + a snapshot of the
-topics config alongside the bag.
-
+The recorder spawns `ros2 bag record` as a subprocess (no Python
+overhead on data streams) and writes experiment metadata + a snapshot
+of the topics config alongside the bag.
 
 Output goes to `~/field_robots_lab_experiments/<experiment_name>/`:
 
@@ -182,6 +219,7 @@ my_first_run/
 │   ├── bag_0.mcap.zstd          # compressed mcap rosbag
 │   └── metadata.yaml             # rosbag2-generated info
 └── metadata.yaml                 # experiment metadata (start, stop, topics)
+└── topics_config.yaml            # snapshot of topics config at record time
 ```
 
 Stop the recorder with `Ctrl+C`. The experiment metadata file is
@@ -191,25 +229,17 @@ finalized with the stop timestamp.
 
 ```bash
 ros2 run telemetry_recorder analyzer \
-  ~/field_robots_lab_experiments/my_first_run
+  ~/field_robots_lab_experiments/scene1_run_01
 ```
 
 The analyzer reads the bag, computes per-topic timing metrics (actual
 rate, inter-arrival time statistics, gap counts), compares against the
-`expected_rate_hz` from `topics_config.yaml`, writes `metrics.json` next
-to the bag, and prints a summary table:
-
-Topic                Count   Rate Hz   p95 ms   p99 ms   Gaps
-/clock                 430      9.59   115.47   127.61      0
-/cmd_vel                60      2.58  2920.63  4788.94      7
-/imu                  4298     95.69    13.51    18.95      2
-/odom                 2153     47.92    25.33    31.48      0
-/scan                  431      9.59   115.10   126.27      0
-/tf                  10765    239.70    20.89    24.81   2853
+`expected_rate_hz` from `topics_config.yaml`, writes `metrics.json`
+next to the bag, and prints a summary table.
 
 The recorder does not subscribe to data topics itself — native rosbag2
-handles writing, and analysis runs offline. This keeps the recorder out
-of the critical simulation path and avoids Python overhead on
+handles writing, and analysis runs offline. This keeps the recorder
+out of the critical simulation path and avoids Python overhead on
 high-rate streams.
 
 ## Current progress
@@ -217,22 +247,33 @@ high-rate streams.
 - **Scene 1 (Scout Mini in warehouse):** working end-to-end. Robot
   spawns, drives, sensors publish, recorder produces valid mcap bags,
   analyzer produces structured metrics.
+- **Scene 2 (heterogeneous fleet):** working. Three robots spawn into
+  one Gazebo instance under separate ROS2 namespaces with different
+  sensor configurations. Recorder captures all per-robot streams.
 - **telemetry_recorder:** functional. Native rosbag2 for writing,
   YAML-driven topic configuration, experiment metadata persistence,
   clean shutdown on SIGINT.
 - **Post-hoc analyzer:** functional. Per-topic timing metrics with
   comparison against expected rates from the topics config. Writes
   structured `metrics.json` per experiment.
-- **Scenes 2–4:** not started.
+- **Scenes 3–4:** not started.
 
-### Observations from baseline runs
+### Observations
 
-On a CPU-only Ubuntu 22.04 / ROS2 Humble laptop, a quiet Scene 1 run
-produces stable telemetry with rate deviation around -4% across IMU,
-odometry, and lidar (e.g., IMU at 95.7 Hz vs the expected 100 Hz). The
-p99 of IMU inter-arrival time settles around 18–20 ms, roughly twice
-the expected 10 ms. These numbers are the working baseline against
-which loaded or stressed runs will be compared.
+**Scene 1 baseline (single robot).** Quiet run on a CPU-only Ubuntu
+22.04 / ROS2 Humble laptop. IMU runs at 95.7 Hz vs the expected 100 Hz
+(rate deviation around -4%). The p99 of IMU inter-arrival time settles
+around 18–20 ms, roughly twice the expected 10 ms.
+
+**Scene 2 baseline (three robots).** The same hardware now runs three
+robots in one Gazebo. All sensor topics degrade uniformly by ~9% —
+IMU at ~87 Hz, odometry at ~43.8 Hz, lidar at ~8.7 Hz across all
+three robots. The degradation is uniform regardless of per-robot
+sensor configuration: `robot_2` (IMU only) shows the same IMU rate as
+`robot_0` (full sensor suite), indicating the bottleneck is at the
+simulator/CPU level, not the per-robot configuration. This is the
+working baseline against which future load-injected and anomaly
+scenarios will be compared.
 
 ## Known limitations
 
@@ -247,10 +288,10 @@ which loaded or stressed runs will be compared.
   flagged as gaps. Gap detection will be made opt-in per topic.
 - **Single-machine simulation only.** All transport happens inside one
   host; cross-machine network effects are not yet exercised.
-- **No load injection yet.** Scenes are currently observed in
-  unstressed conditions. Controlled load profiles (CPU throttling,
+- **No load injection yet.** Scenes are currently observed in their
+  natural load conditions. Controlled load profiles (CPU throttling,
   injected jitter, extra subscribers) are the next experimental layer.
-  
+
 ## On Gazebo Classic and EOL
 
 Gazebo Classic 11 reached end-of-life in January 2025. This repository
@@ -266,7 +307,6 @@ all four scenes are stable on Classic. The xacro structure here is
 written with that migration in mind: physical descriptions are isolated
 from Gazebo-specific blocks (see scout_mini.gazebo.xacro vs
 scout_mini.urdf.xacro), so only the latter needs to be rewritten.
-
 
 ## License
 
