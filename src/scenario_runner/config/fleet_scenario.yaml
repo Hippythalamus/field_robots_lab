@@ -1,0 +1,59 @@
+# Repeatable navigation scenario for Scene 2 (heterogeneous fleet).
+#
+# Each robot follows a small triangular path in a designated safe zone,
+# clear of the static obstacles in minimal_warehouse.world.
+#
+# Safe zones chosen to:
+# - stay within 20x20m warehouse (walls at ±10)
+# - keep at least 1.5m clearance from any obstacle
+# - avoid inter-robot conflicts (each robot has its own quadrant)
+
+scenario:
+  name: "fleet_navigation_baseline"
+  description: "Each robot follows a small rectangular path in its safe zone"
+
+  pd_params:
+    tolerance: 0.3
+    kp_linear: 0.5
+    kp_angular: 1.5
+    kd_angular: 0.3
+    max_linear: 0.4
+    max_angular: 1.0
+    control_rate_hz: 20.0
+    start_delay_s: 3.0
+
+robots:
+  # robot_0: bottom-left quadrant
+  # obstacles nearby: obstacle_2 at (-4,-3), obstacle_5 at (0,-5)
+  # Safe zone: x in [-2, 0], y in [-1, 1]
+  - id: 0
+    namespace: robot_0
+    spawn: [-2.0, -2.0]
+    waypoints:
+      - [-1.0, -1.0]
+      - [-1.0, 1.0]
+      - [-3.0, 1.0]
+      - [-3.0, -1.0]
+
+  # robot_1: bottom-right quadrant
+  # obstacles nearby: obstacle_4 at (5,-2)
+  # Safe zone: x in [1, 3], y in [-1, 1]
+  - id: 1
+    namespace: robot_1
+    spawn: [2.0, -2.0]
+    waypoints:
+      - [1.0, -1.0]
+      - [3.0, -1.0]
+      - [3.0, 1.0]
+      - [1.0, 1.0]
+
+  # robot_2: top center, away from obstacle_3 at (3,5) and obstacle_6 at (6,3)
+  # Safe zone: x in [-1, 1], y in [2.5, 4.5]
+  - id: 2
+    namespace: robot_2
+    spawn: [0.0, 2.0]
+    waypoints:
+      - [1.0, 3.0]
+      - [-1.0, 3.0]
+      - [-1.0, 4.5]
+      - [1.0, 4.5]
