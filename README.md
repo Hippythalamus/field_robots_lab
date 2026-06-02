@@ -43,8 +43,6 @@ Other simulators may be added where they fit better (e.g., MuJoCo for
 quadruped contact dynamics) — noted per scene.
 
 ## Repository structure
-
-## Repository structure
 field_robots_lab/
 ├── src/
 │   ├── scout_mini_description/   # URDF, Gazebo plugins, world, launch
