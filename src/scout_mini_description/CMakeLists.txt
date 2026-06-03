@@ -4,7 +4,7 @@ project(scout_mini_description)
 find_package(ament_cmake REQUIRED)
 
 install(
-  DIRECTORY urdf launch config meshes rviz worlds
+  DIRECTORY urdf launch config meshes rviz
   DESTINATION share/${PROJECT_NAME}
 )
 

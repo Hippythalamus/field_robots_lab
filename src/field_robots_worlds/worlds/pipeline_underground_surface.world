@@ -1,0 +1,409 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="pipeline_underground_surface">
+
+    <!-- Physics -->
+    <physics name="default_physics" default="0" type="ode">
+      <max_step_size>0.004</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>250</real_time_update_rate>
+    </physics>
+
+    <!-- Outdoor scene -->
+    <scene>
+      <ambient>0.5 0.5 0.5 1</ambient>
+      <background>0.65 0.75 0.85 1</background>
+      <shadows>0</shadows>
+      <grid>true</grid>
+    </scene>
+
+    <!-- Sun -->
+    <light name="sun" type="directional">
+      <cast_shadows>0</cast_shadows>
+      <pose>0 0 20 0 0 0</pose>
+      <diffuse>0.9 0.9 0.85 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.3 0.4 -1.0</direction>
+    </light>
+
+    <!-- ============================================================== -->
+    <!-- Ground plane: bare earth color (typical pipeline corridor)     -->
+    <!-- ============================================================== -->
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>60 40</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>60 40</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.45 0.4 0.3 1</ambient>
+            <diffuse>0.55 0.48 0.35 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================== -->
+    <!-- Pipeline corridor markers (yellow posts mark the buried route) -->
+    <!-- Buried pipeline runs along x-axis at y=0                       -->
+    <!-- Markers every 10m on both sides at y=±3                        -->
+    <!-- ============================================================== -->
+
+    <!-- North side markers (y = +3) -->
+    <model name="marker_n_x20m">
+      <static>true</static>
+      <pose>-20 3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="marker_n_x10m">
+      <static>true</static>
+      <pose>-10 3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="marker_n_x0">
+      <static>true</static>
+      <pose>0 3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="marker_n_xp10m">
+      <static>true</static>
+      <pose>10 3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="marker_n_xp20m">
+      <static>true</static>
+      <pose>20 3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- South side markers (y = -3) -->
+    <model name="marker_s_x20m">
+      <static>true</static>
+      <pose>-20 -3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="marker_s_x10m">
+      <static>true</static>
+      <pose>-10 -3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="marker_s_x0">
+      <static>true</static>
+      <pose>0 -3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="marker_s_xp10m">
+      <static>true</static>
+      <pose>10 -3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="marker_s_xp20m">
+      <static>true</static>
+      <pose>20 -3 0.75 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.08</radius>
+              <length>1.5</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================== -->
+    <!-- Pipeline marker sign (vertical board near corridor start)      -->
+    <!-- ============================================================== -->
+    <model name="warning_sign">
+      <static>true</static>
+      <pose>-25 4 1.5 0 0 0</pose>
+      <link name="link">
+        <visual name="post">
+          <pose>0 0 -0.5 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.05</radius>
+              <length>2.0</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.4 0.4 0.4 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+        <visual name="board">
+          <pose>0 0 0.5 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.8 0.6</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+            <diffuse>1.0 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================== -->
+    <!-- ANOMALY 1: Soil discoloration patch (potential gas leak hint)  -->
+    <!-- Dark wet-looking patch on the ground at x=-12, y=0             -->
+    <!-- ============================================================== -->
+    <model name="anomaly_soil_patch">
+      <static>true</static>
+      <pose>-12 0 0.01 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>1.5</radius>
+              <length>0.02</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.2 0.15 0.1 1</ambient>
+            <diffuse>0.25 0.2 0.12 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================== -->
+    <!-- ANOMALY 2: Ground subsidence (depression in soil)              -->
+    <!-- Slightly recessed disc at x=5, y=-0.5                          -->
+    <!-- ============================================================== -->
+    <model name="anomaly_subsidence">
+      <static>true</static>
+      <pose>5 -0.5 -0.05 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>2.0</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.35 0.3 0.22 1</ambient>
+            <diffuse>0.4 0.35 0.25 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================== -->
+    <!-- ANOMALY 3: Vegetation stress zone (yellowish patch)            -->
+    <!-- Dried/stressed vegetation at x=15, y=1                         -->
+    <!-- ============================================================== -->
+    <model name="anomaly_vegetation_stress">
+      <static>true</static>
+      <pose>15 1 0.005 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>3.0 2.0 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.7 0.6 0.3 1</ambient>
+            <diffuse>0.8 0.7 0.35 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================================== -->
+    <!-- Normal vegetation patches (green) for contrast / reference     -->
+    <!-- ============================================================== -->
+    <model name="vegetation_normal_1">
+      <static>true</static>
+      <pose>-8 -5 0.005 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>2.0 2.0 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.25 0.45 0.15 1</ambient>
+            <diffuse>0.3 0.55 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="vegetation_normal_2">
+      <static>true</static>
+      <pose>8 5 0.005 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>2.5 1.5 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.25 0.45 0.15 1</ambient>
+            <diffuse>0.3 0.55 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="vegetation_normal_3">
+      <static>true</static>
+      <pose>22 -2 0.005 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>3.0 2.0 0.01</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.25 0.45 0.15 1</ambient>
+            <diffuse>0.3 0.55 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

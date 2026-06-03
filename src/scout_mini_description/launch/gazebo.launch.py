@@ -1,19 +1,22 @@
+"""Scene 1: single Scout Mini in warehouse world."""
+
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
+from launch.substitutions import Command
 
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('scout_mini_description')
+    worlds_share = get_package_share_directory('field_robots_worlds')
     gazebo_ros_share = get_package_share_directory('gazebo_ros')
 
+    world_path = os.path.join(worlds_share, 'worlds', 'minimal_warehouse.world')
     urdf_path = os.path.join(pkg_share, 'urdf', 'scout_mini.urdf.xacro')
-    world_path = os.path.join(pkg_share, 'worlds', 'minimal_warehouse.world')
 
     robot_description = {
         'robot_description': ParameterValue(

@@ -20,7 +20,8 @@ def generate_launch_description():
     pkg_share = get_package_share_directory('scout_mini_description')
     gazebo_ros_share = get_package_share_directory('gazebo_ros')
 
-    world_path = os.path.join(pkg_share, 'worlds', 'minimal_warehouse.world')
+    worlds_share = get_package_share_directory('field_robots_worlds')
+    world_path = os.path.join(worlds_share, 'worlds', 'minimal_warehouse.world')
     spawn_launch = os.path.join(pkg_share, 'launch', 'spawn_robot.launch.py')
 
     # Start Gazebo with our world
