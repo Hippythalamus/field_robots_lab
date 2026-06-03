@@ -1,0 +1,46 @@
+# Topics to record for Scene 3: PX4 SITL drone
+# Standard PX4 telemetry via uXRCE-DDS bridge
+
+experiment:
+  scene: "03_drone_baseline"
+  robot: "px4_iris"
+
+topics:
+  - name: /fmu/out/vehicle_local_position
+    description: "Local NED position from EKF"
+    expected_rate_hz: 100
+
+  - name: /fmu/out/vehicle_attitude
+    description: "Vehicle quaternion attitude"
+    expected_rate_hz: 250
+
+  - name: /fmu/out/vehicle_global_position
+    description: "Global lat/lon position"
+    expected_rate_hz: 50
+
+  - name: /fmu/out/vehicle_status
+    description: "Arming state, nav state"
+    expected_rate_hz: null
+
+  - name: /fmu/out/sensor_combined
+    description: "IMU sensor data (accel + gyro)"
+    expected_rate_hz: 250
+
+  - name: /fmu/out/vehicle_angular_velocity
+    description: "Filtered angular velocity"
+    expected_rate_hz: 250
+
+  - name: /fmu/out/battery_status
+    description: "Battery state (simulated)"
+    expected_rate_hz: 10
+
+  - name: /fmu/out/home_position
+    description: "Home (origin) position"
+    expected_rate_hz: null
+
+  - name: /clock
+    description: "ROS clock (note: PX4 uses its own time)"
+    expected_rate_hz: null
+
+storage:
+  format: mcap
