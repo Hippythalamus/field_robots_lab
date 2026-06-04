@@ -1,0 +1,75 @@
+material PipelineWorlds/DirtGround
+{
+  receive_shadows on
+  technique
+  {
+    pass
+    {
+      ambient 0.7 0.7 0.7 1.0
+      diffuse 0.9 0.9 0.9 1.0
+      specular 0.1 0.1 0.1 1.0 12.5
+      texture_unit
+      {
+        texture dirt_ground.jpg
+        filtering trilinear
+      }
+    }
+  }
+}
+
+material PipelineWorlds/GrassNormal
+{
+  receive_shadows on
+  technique
+  {
+    pass
+    {
+      ambient 0.7 0.7 0.7 1.0
+      diffuse 0.9 0.9 0.9 1.0
+      specular 0.05 0.05 0.05 1.0 8.0
+      texture_unit
+      {
+        texture grass_normal.jpg
+        filtering trilinear
+      }
+    }
+  }
+}
+
+material PipelineWorlds/GrassDry
+{
+  receive_shadows on
+  technique
+  {
+    pass
+    {
+      ambient 0.7 0.7 0.7 1.0
+      diffuse 0.9 0.9 0.9 1.0
+      specular 0.05 0.05 0.05 1.0 8.0
+      texture_unit
+      {
+        texture grass_dry.jpg
+        filtering trilinear
+      }
+    }
+  }
+}
+
+material PipelineWorlds/WetSoil
+{
+  receive_shadows on
+  technique
+  {
+    pass
+    {
+      ambient 0.5 0.5 0.5 1.0
+      diffuse 0.7 0.7 0.7 1.0
+      specular 0.2 0.2 0.2 1.0 16.0
+      texture_unit
+      {
+        texture wet_soil.jpg
+        filtering trilinear
+      }
+    }
+  }
+}

@@ -48,8 +48,11 @@
             </plane>
           </geometry>
           <material>
-            <ambient>0.45 0.4 0.3 1</ambient>
-            <diffuse>0.55 0.48 0.35 1</diffuse>
+            <script>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/scripts/pipeline_materials.material</uri>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/textures</uri>
+              <name>PipelineWorlds/DirtGround</name>
+            </script>
           </material>
         </visual>
       </link>
@@ -296,8 +299,11 @@
             </cylinder>
           </geometry>
           <material>
-            <ambient>0.2 0.15 0.1 1</ambient>
-            <diffuse>0.25 0.2 0.12 1</diffuse>
+            <script>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/scripts/pipeline_materials.material</uri>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/textures</uri>
+              <name>PipelineWorlds/WetSoil</name>
+            </script>
           </material>
         </visual>
       </link>
@@ -341,8 +347,11 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.7 0.6 0.3 1</ambient>
-            <diffuse>0.8 0.7 0.35 1</diffuse>
+            <script>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/scripts/pipeline_materials.material</uri>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/textures</uri>
+              <name>PipelineWorlds/GrassDry</name>
+            </script>
           </material>
         </visual>
       </link>
@@ -362,8 +371,11 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.25 0.45 0.15 1</ambient>
-            <diffuse>0.3 0.55 0.2 1</diffuse>
+            <script>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/scripts/pipeline_materials.material</uri>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/textures</uri>
+              <name>PipelineWorlds/GrassNormal</name>
+            </script>
           </material>
         </visual>
       </link>
@@ -380,8 +392,11 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.25 0.45 0.15 1</ambient>
-            <diffuse>0.3 0.55 0.2 1</diffuse>
+            <script>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/scripts/pipeline_materials.material</uri>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/textures</uri>
+              <name>PipelineWorlds/GrassNormal</name>
+            </script>
           </material>
         </visual>
       </link>
@@ -398,8 +413,11 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.25 0.45 0.15 1</ambient>
-            <diffuse>0.3 0.55 0.2 1</diffuse>
+            <script>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/scripts/pipeline_materials.material</uri>
+              <uri>file:///home/evg/field_robots_lab/install/field_robots_worlds/share/field_robots_worlds/materials/textures</uri>
+              <name>PipelineWorlds/GrassNormal</name>
+            </script>
           </material>
         </visual>
       </link>
