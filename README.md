@@ -23,7 +23,7 @@ controlled load experiments rather than headline-grabbing autonomy.
 |---|-------|----------|--------|
 | 1 | Scout Mini (AgileX) | warehouse navigation baseline | working — see Quick Start |
 | 2 | Heterogeneous fleet | three Scout Minis with mixed sensor configs | working — see Quick Start |
-| 3 | DJI M350-class surrogate (PX4 SITL) | pipeline inspection | planned |
+| 3 | DJI M350-class surrogate (PX4 SITL) | pipeline inspection | baseline working, mission flight in progress |
 | 4 | Quadruped (Go2 / ANYmal-class) | indoor inspection | planned |
 
 ## What this is not
@@ -38,33 +38,45 @@ controlled load experiments rather than headline-grabbing autonomy.
 - ROS2 Humble
 - Gazebo Classic 11
 - Ubuntu 22.04
+- **For Scene 3 only:** PX4 SITL v1.16.2, Micro-XRCE-DDS Agent v3.0.0,
+  `px4_msgs` v1.16.2
 
 Other simulators may be added where they fit better (e.g., MuJoCo for
 quadruped contact dynamics) — noted per scene.
 
 ## Repository structure
+
+```
 field_robots_lab/
 ├── src/
-│   ├── scout_mini_description/   # URDF, Gazebo plugins, world, launch
-│   └── telemetry_recorder/        # Recording wrapper + analyzer
-│   └── scenario_runner/           # Repeatable scenarios with PD navigation
+│   ├── scout_mini_description/   # Scout Mini URDF, sensor macros, launch
+│   ├── telemetry_recorder/        # Recording wrapper + analyzer
+│   ├── scenario_runner/           # Repeatable scenarios with PD navigation
+│   └── field_robots_worlds/       # Gazebo worlds + shared materials/textures
 ├── docs/                          # Per-scene documentation (planned)
 └── README.md
+```
 
-Sensors are isolated into parameterized xacro macros
-(`urdf/sensors/imu.xacro`, `urdf/sensors/lidar_2d.xacro`), so each
-robot instance can be configured with different sensor profiles
-without touching the base URDF. The main robot xacro accepts
-`use_imu`, `use_lidar`, `lidar_samples`, `imu_rate`, and `namespace`
-as launch-supplied arguments.
+Worlds and visual assets (textures, material scripts) are decoupled
+into a separate `field_robots_worlds` package so they can be reused
+across robots and scenes. Sensors on Scout Mini are isolated into
+parameterized xacro macros (`urdf/sensors/imu.xacro`,
+`urdf/sensors/lidar_2d.xacro`); each robot instance can be configured
+with different sensor profiles without touching the base URDF. The
+main robot xacro accepts `use_imu`, `use_lidar`, `lidar_samples`,
+`imu_rate`, and `namespace` as launch-supplied arguments.
 
-Scene-specific files (worlds, launch files) currently live inside the
-robot description package. They will be reorganized into a top-level
-`scenes/` directory in a future revision.
+For Scene 3, the PX4 autopilot and Micro-XRCE-DDS Agent live outside
+this workspace (in `~/PX4-Autopilot/` and `~/Micro-XRCE-DDS-Agent/`
+by convention). The `px4_msgs` ROS2 package lives in a separate
+workspace (`~/px4_ros_ws/`) to keep PX4 message generation isolated
+from this project's build.
 
 ## Quick Start
 
-Requires Ubuntu 22.04 + ROS2 Humble + Gazebo Classic 11 + `gazebo_ros_pkgs`.
+Requires Ubuntu 22.04 + ROS2 Humble + Gazebo Classic 11 +
+`gazebo_ros_pkgs`. Scene 3 also requires PX4 SITL — see *Scene 3
+setup* below.
 
 ### Build
 
@@ -148,11 +160,76 @@ sudo apt install ros-humble-teleop-twist-keyboard
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
+### Run Scene 3: PX4 SITL drone (baseline)
+
+Scene 3 requires PX4 SITL to be installed separately. See *Scene 3
+setup* below for the first-time setup procedure.
+
+Once PX4 is built and the Micro-XRCE-DDS Agent is installed, a basic
+drone telemetry run requires four terminals:
+
+```bash
+# Terminal 1: PX4 SITL + Gazebo with default iris drone
+cd ~/PX4-Autopilot
+make px4_sitl_default gazebo-classic
+
+# Terminal 2: Micro-XRCE-DDS Agent (ROS2 ↔ PX4 bridge)
+MicroXRCEAgent udp4 -p 8888
+
+# Terminal 3: Record telemetry
+source /opt/ros/humble/setup.bash
+source ~/px4_ros_ws/install/setup.bash
+source ~/field_robots_lab/install/setup.bash
+ros2 launch telemetry_recorder recorder.launch.py \
+  topics_config:=$(ros2 pkg prefix telemetry_recorder)/share/telemetry_recorder/config/drone_topics.yaml \
+  experiment_name:=drone_baseline_01
+
+# Terminal 4 (in Terminal 1's PX4 shell, after Ready for takeoff):
+pxh> commander takeoff
+pxh> commander mode position
+# ... wait, observe telemetry ...
+pxh> commander land
+```
+
+To use the M350-class airframe parameters (mass, max speed, hover
+throttle, inertia) instead of default iris, set `PX4_SYS_AUTOSTART`:
+
+```bash
+cd ~/PX4-Autopilot
+PX4_SYS_AUTOSTART=10025 make px4_sitl_default gazebo-classic
+```
+
+The drone visual model remains iris, but the flight characteristics
+behave like an M350-class industrial quadrotor.
+
+### Pipeline worlds (for Scene 3)
+
+Two worlds are available in `field_robots_worlds`, designed for drone
+inspection scenarios:
+
+- **`pipeline_above_ground.world`** — pipe rack with four parallel
+  pipes on supports, valves, and boundary fences. 60×30 m corridor.
+- **`pipeline_underground_surface.world`** — outdoor scene representing
+  a buried pipeline corridor as seen from a surface inspection drone:
+  pipeline route markers, anomaly patches (soil discoloration,
+  subsidence, vegetation stress) against a textured ground with
+  normal vegetation reference zones.
+
+Launch a world standalone with Gazebo (no drone):
+
+```bash
+gazebo $(ros2 pkg prefix field_robots_worlds)/share/field_robots_worlds/worlds/pipeline_above_ground.world
+```
+
+Integration of these worlds with PX4 SITL drone is in progress (a
+waypoint navigator node for offboard mission flight is the next
+milestone).
+
 ### Record telemetry separately (without scenario_runner)
 
 The recorder can be used standalone with any of the launches above.
 Scene 1 uses `scout_mini_topics.yaml` (default); Scene 2 uses
-`fleet_topics.yaml`:
+`fleet_topics.yaml`; Scene 3 uses `drone_topics.yaml`:
 
 ```bash
 # Scene 1
@@ -163,19 +240,23 @@ ros2 launch telemetry_recorder recorder.launch.py \
 ros2 launch telemetry_recorder recorder.launch.py \
   topics_config:=$(ros2 pkg prefix telemetry_recorder)/share/telemetry_recorder/config/fleet_topics.yaml \
   experiment_name:=scene2_run_01
+
+# Scene 3
+ros2 launch telemetry_recorder recorder.launch.py \
+  topics_config:=$(ros2 pkg prefix telemetry_recorder)/share/telemetry_recorder/config/drone_topics.yaml \
+  experiment_name:=scene3_run_01
 ```
 
 Output goes to `~/field_robots_lab_experiments/<experiment_name>/`:
 
 ```
-my_first_run/
+my_run_01/
 ├── bag/
-│   ├── bag_0.mcap.zstd          # compressed mcap rosbag
+│   ├── bag_0.mcap                # native mcap rosbag
 │   └── metadata.yaml             # rosbag2-generated info
-└── metadata.yaml                 # experiment metadata (start, stop, topics)
+├── metadata.yaml                 # experiment metadata (start, stop, topics)
 └── topics_config.yaml            # snapshot of topics config at record time
 ```
-
 
 ### Analyze the recording
 
@@ -193,21 +274,88 @@ The recorder does not subscribe to data topics — native rosbag2
 handles writing, and analysis runs offline. This keeps the recorder
 out of the critical simulation path.
 
+## Scene 3 setup (PX4 SITL)
+
+Scene 3 requires several external components installed once:
+
+```bash
+# 1. PX4-Autopilot v1.16.2
+cd ~
+git clone https://github.com/PX4/PX4-Autopilot.git --recursive
+cd PX4-Autopilot
+git checkout v1.16.2
+git submodule update --init --recursive
+
+# Install dependencies (skipping NuttX and bundled simulators)
+bash Tools/setup/ubuntu.sh --no-nuttx --no-sim-tools
+
+# Additional packages required for Gazebo Classic build:
+sudo apt install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+                 libunwind-dev
+
+# Build PX4 SITL with GCC (clang-18 is incompatible with v1.16.2)
+make distclean
+CC=gcc CXX=g++ make px4_sitl_default gazebo-classic
+```
+
+```bash
+# 2. Micro-XRCE-DDS Agent v3.0.0 (ROS2 ↔ PX4 bridge)
+cd ~
+git clone -b v3.0.0 https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
+cd Micro-XRCE-DDS-Agent
+mkdir build && cd build
+cmake ..
+make
+sudo make install
+sudo ldconfig /usr/local/lib/
+```
+
+```bash
+# 3. px4_msgs v1.16.2 in a separate workspace
+mkdir -p ~/px4_ros_ws/src
+cd ~/px4_ros_ws/src
+git clone https://github.com/PX4/px4_msgs.git
+cd px4_msgs
+git checkout v1.16.2
+cd ~/px4_ros_ws
+source /opt/ros/humble/setup.bash
+colcon build
+```
+
+```bash
+# 4. Install the M350-class airframe in PX4
+# (file is in scene3/airframes/ once that directory is added to the repo;
+# until then, the airframe content is documented in the M350-class
+# airframe section below)
+```
+
+Total disk usage for Scene 3 dependencies: approximately 5 GB.
+
 ## Current progress
 
 - **Scene 1 (Scout Mini in warehouse):** working end-to-end.
 - **Scene 2 (heterogeneous fleet):** working. Three robots in one
   Gazebo instance under separate ROS2 namespaces with different
   sensor configurations.
+- **scenario_runner:** functional. PD-controlled waypoint navigation
+  per robot, orchestrated launches for full repeatable runs. No
+  teleoperation required.
+- **Scene 3 (PX4 SITL drone baseline):** working. Drone takes off,
+  hovers, and lands via PX4 commander; telemetry flows through the
+  Micro-XRCE-DDS Agent into ROS2 topics; recorder and analyzer process
+  PX4 data the same way they handle Scout Mini data. M350-class
+  airframe parameters available via `PX4_SYS_AUTOSTART=10025`.
+- **Pipeline worlds:** above-ground (pipe rack) and underground-surface
+  (corridor with anomaly patches) worlds available in
+  `field_robots_worlds`. The underground-surface world uses textured
+  ground and vegetation. Drone integration with these worlds (mission
+  flight via offboard control) is the next milestone.
 - **telemetry_recorder:** functional. Native rosbag2, YAML-driven
   configuration, experiment metadata, clean SIGINT handling.
 - **Post-hoc analyzer:** functional. Per-topic timing metrics with
   comparison against expected rates. Writes structured
   `metrics.json` per experiment.
-- **scenario_runner:** functional. PD-controlled waypoint navigation
-  per robot, orchestrated launches for full repeatable runs. No
-  teleoperation required.
-- **Scenes 3–4:** not started.
+- **Scene 4 (quadruped):** not started.
 
 ### Observations
 
@@ -228,8 +376,20 @@ simulator/CPU level, not the per-robot configuration.
 runner driving all three robots through fixed waypoints via PD
 control, telemetry stabilises further — IMU around 91–92 Hz, odometry
 around 45–46 Hz, with substantially fewer gaps than under bursty
-teleop. This is the working baseline against which load-injected and
-anomaly scenarios will be compared.
+teleop.
+
+**Scene 3 baseline (single PX4 drone).** With drone taking off,
+hovering, and landing under PX4 commander control, all PX4 output
+topics serialize through the uXRCE-DDS bridge at a uniform rate of
+approximately 86 Hz, regardless of the rates at which PX4 publishes
+internally (which differ per topic, e.g. 100 Hz for
+`vehicle_local_position` vs 250 Hz nominal for `vehicle_attitude`).
+This is a system-level observation: the bridge becomes the effective
+rate ceiling for ROS2-side consumers, and tail latency is dominated
+by bursty publication patterns from the bridge rather than by PX4
+itself. Gap counts on all PX4 topics are uniform (~1860 gaps across
+~13500 messages each in the baseline run), consistent with bridge
+burst patterns rather than per-topic dropouts.
 
 ### Repeatability check
 
@@ -262,6 +422,11 @@ quantitative baseline for any future anomaly detection work.
   burst, then a long pause until the next burst. The current
   median × 3 gap heuristic flags the long pauses as gaps even when
   the system is healthy. A multi-frame-aware metric is planned.
+- **Bridge-bursted topics report misleading gaps.** PX4 topics
+  delivered through the uXRCE-DDS bridge share the same bimodal
+  inter-arrival pattern (a burst of messages followed by a longer
+  pause). The same gap heuristic above misclassifies these gaps. The
+  fix is the same: a burst-aware metric, to be added to the analyzer.
 - **Sparse topics trigger spurious gaps.** Topics without a fixed
   publication rate (e.g. teleoperated `cmd_vel`) report misleading
   gap counts. Gap detection will be made opt-in per topic.
@@ -274,6 +439,11 @@ quantitative baseline for any future anomaly detection work.
 - **Deterministic seeds not yet fixed.** Sensor noise uses
   Gazebo's default seeding; repeatability is statistical (see table
   above), not bit-identical.
+- **Scene 3 drone visual is unchanged.** The M350-class airframe
+  changes flight parameters (mass, max speed, tilt limits, hover
+  throttle, battery cells) but the visible Gazebo model remains the
+  default iris quadrotor. A visual model swap is not part of the
+  current scope.
 
 ## On Gazebo Classic and EOL
 
