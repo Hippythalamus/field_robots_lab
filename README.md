@@ -23,7 +23,7 @@ controlled load experiments rather than headline-grabbing autonomy.
 |---|-------|----------|--------|
 | 1 | Scout Mini (AgileX) | warehouse navigation baseline | working — see Quick Start |
 | 2 | Heterogeneous fleet | three Scout Minis with mixed sensor configs | working — see Quick Start |
-| 3 | DJI M350-class surrogate (PX4 SITL) | pipeline inspection | baseline working, mission flight in progress |
+| 3 | DJI M350-class surrogate (PX4 SITL) | pipeline inspection sweep | working — see Quick Start |
 | 4 | Quadruped (Go2 / ANYmal-class) | indoor inspection | planned |
 
 ## What this is not
@@ -51,7 +51,8 @@ field_robots_lab/
 ├── src/
 │   ├── scout_mini_description/   # Scout Mini URDF, sensor macros, launch
 │   ├── telemetry_recorder/        # Recording wrapper + analyzer
-│   ├── scenario_runner/           # Repeatable scenarios with PD navigation
+│   ├── scenario_runner/           # Scout Mini PD-controlled scenarios
+│   ├── drone_scenario_runner/     # PX4 offboard waypoint missions
 │   └── field_robots_worlds/       # Gazebo worlds + shared materials/textures
 ├── docs/                          # Per-scene documentation (planned)
 └── README.md
@@ -118,7 +119,7 @@ Telemetry is published under per-robot namespaces:
 `/robot_0/imu`, `/robot_0/scan`, `/robot_0/odom`, `/robot_0/cmd_vel`,
 and equivalents for `robot_1` and `robot_2` (no `/robot_2/scan`).
 
-### Run a repeatable scenario (with automated PD navigation)
+### Run a repeatable Scout Mini scenario (Scene 2 with PD navigation)
 
 ```bash
 ros2 launch scenario_runner scenario_navigation.launch.py \
@@ -135,11 +136,8 @@ This is the end-to-end repeatable run for Scene 2:
   `~/field_robots_lab_experiments/my_run_01/`
 
 Each navigator drives its robot through a small rectangular path
-using a PD controller. No teleoperation. When all navigators finish,
-the run can be stopped with `Ctrl+C`.
-
-A typical run takes 60–90 seconds and produces a complete
-experiment directory with bag, metadata, and topics config.
+using a PD controller. No teleoperation. A typical run takes 60–90
+seconds.
 
 ### Manual driving (Scenes 1 and 2 without scenarios)
 
@@ -153,30 +151,59 @@ ros2 topic pub --rate 10 /robot_0/cmd_vel geometry_msgs/msg/Twist \
   "{linear: {x: 0.3}, angular: {z: 0.1}}"
 ```
 
-Or keyboard teleop:
-
-```bash
-sudo apt install ros-humble-teleop-twist-keyboard
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
-```
-
-### Run Scene 3: PX4 SITL drone (baseline)
+### Run Scene 3: PX4 SITL drone mission
 
 Scene 3 requires PX4 SITL to be installed separately. See *Scene 3
 setup* below for the first-time setup procedure.
 
-Once PX4 is built and the Micro-XRCE-DDS Agent is installed, a basic
-drone telemetry run requires four terminals:
+Once PX4 is built and the Micro-XRCE-DDS Agent is installed, a
+repeatable drone mission run uses two terminals:
 
 ```bash
-# Terminal 1: PX4 SITL + Gazebo with default iris drone
+# Terminal 1: PX4 SITL + Gazebo with M350-class airframe
 cd ~/PX4-Autopilot
-make px4_sitl_default gazebo-classic
+PX4_SYS_AUTOSTART=10025 make px4_sitl_default gazebo-classic
 
-# Terminal 2: Micro-XRCE-DDS Agent (ROS2 ↔ PX4 bridge)
-MicroXRCEAgent udp4 -p 8888
+# Wait for "Ready for takeoff!" prompt before launching the mission.
+```
 
-# Terminal 3: Record telemetry
+```bash
+# Terminal 2: orchestrated mission (Agent + recorder + navigator)
+source /opt/ros/humble/setup.bash
+source ~/px4_ros_ws/install/setup.bash
+source ~/field_robots_lab/install/setup.bash
+
+ros2 launch drone_scenario_runner drone_mission.launch.py \
+  experiment_name:=drone_pipeline_sweep_01
+```
+
+The launch starts:
+- Micro-XRCE-DDS Agent on UDP port 8888
+- Telemetry recorder writing to
+  `~/field_robots_lab_experiments/drone_pipeline_sweep_01/`
+- `drone_waypoint_navigator` — sends PX4 commands to arm, switch to
+  offboard mode, fly a 5-waypoint inspection sweep at 5 m altitude
+  along the pipeline corridor (~80 m total path), then auto-land
+
+A typical mission takes ~60–90 seconds. The navigator exits
+automatically after landing.
+
+To use the default iris airframe instead of the M350-class one, omit
+`PX4_SYS_AUTOSTART=10025` from the PX4 launch command. The mission
+itself does not depend on which airframe is loaded — the navigator
+issues NED position setpoints that any multicopter can follow.
+
+### Drone telemetry without a mission (baseline)
+
+For comparison runs (drone hovering or driven via PX4 commander
+without offboard automation), record telemetry directly:
+
+```bash
+# Terminal 1: PX4 SITL (as above)
+
+# Terminal 2: MicroXRCEAgent + recorder
+MicroXRCEAgent udp4 -p 8888 &
+sleep 2
 source /opt/ros/humble/setup.bash
 source ~/px4_ros_ws/install/setup.bash
 source ~/field_robots_lab/install/setup.bash
@@ -184,28 +211,15 @@ ros2 launch telemetry_recorder recorder.launch.py \
   topics_config:=$(ros2 pkg prefix telemetry_recorder)/share/telemetry_recorder/config/drone_topics.yaml \
   experiment_name:=drone_baseline_01
 
-# Terminal 4 (in Terminal 1's PX4 shell, after Ready for takeoff):
+# Terminal 3 (in Terminal 1's PX4 shell):
 pxh> commander takeoff
-pxh> commander mode position
-# ... wait, observe telemetry ...
 pxh> commander land
 ```
 
-To use the M350-class airframe parameters (mass, max speed, hover
-throttle, inertia) instead of default iris, set `PX4_SYS_AUTOSTART`:
+### Pipeline worlds (Scene 3 environments)
 
-```bash
-cd ~/PX4-Autopilot
-PX4_SYS_AUTOSTART=10025 make px4_sitl_default gazebo-classic
-```
-
-The drone visual model remains iris, but the flight characteristics
-behave like an M350-class industrial quadrotor.
-
-### Pipeline worlds (for Scene 3)
-
-Two worlds are available in `field_robots_worlds`, designed for drone
-inspection scenarios:
+Two worlds are available in `field_robots_worlds`, both using
+textured ground for outdoor realism:
 
 - **`pipeline_above_ground.world`** — pipe rack with four parallel
   pipes on supports, valves, and boundary fences. 60×30 m corridor.
@@ -221,11 +235,14 @@ Launch a world standalone with Gazebo (no drone):
 gazebo $(ros2 pkg prefix field_robots_worlds)/share/field_robots_worlds/worlds/pipeline_above_ground.world
 ```
 
-Integration of these worlds with PX4 SITL drone is in progress (a
-waypoint navigator node for offboard mission flight is the next
-milestone).
+The current Scene 3 mission flies in the default empty PX4 world. The
+mission trajectory uses NED coordinates corresponding to the
+above-ground pipeline corridor extent (x ∈ [-20, +20] at altitude 5 m).
+Integrating PX4 SITL spawn with the field_robots_worlds pipeline
+worlds is a future refinement; the mission flight path is already
+laid out for that geometry.
 
-### Record telemetry separately (without scenario_runner)
+### Record telemetry separately (without scenario orchestration)
 
 The recorder can be used standalone with any of the launches above.
 Scene 1 uses `scout_mini_topics.yaml` (default); Scene 2 uses
@@ -241,7 +258,7 @@ ros2 launch telemetry_recorder recorder.launch.py \
   topics_config:=$(ros2 pkg prefix telemetry_recorder)/share/telemetry_recorder/config/fleet_topics.yaml \
   experiment_name:=scene2_run_01
 
-# Scene 3
+# Scene 3 baseline (without mission)
 ros2 launch telemetry_recorder recorder.launch.py \
   topics_config:=$(ros2 pkg prefix telemetry_recorder)/share/telemetry_recorder/config/drone_topics.yaml \
   experiment_name:=scene3_run_01
@@ -324,9 +341,9 @@ colcon build
 
 ```bash
 # 4. Install the M350-class airframe in PX4
-# (file is in scene3/airframes/ once that directory is added to the repo;
-# until then, the airframe content is documented in the M350-class
-# airframe section below)
+# Copy the airframe file (defines mass, max speed, hover throttle, etc.)
+# from this repo into the PX4 ROMFS, then register it in the CMakeLists.
+# See docs/scene3_m350_airframe.md for the airframe contents (planned).
 ```
 
 Total disk usage for Scene 3 dependencies: approximately 5 GB.
@@ -340,16 +357,18 @@ Total disk usage for Scene 3 dependencies: approximately 5 GB.
 - **scenario_runner:** functional. PD-controlled waypoint navigation
   per robot, orchestrated launches for full repeatable runs. No
   teleoperation required.
-- **Scene 3 (PX4 SITL drone baseline):** working. Drone takes off,
-  hovers, and lands via PX4 commander; telemetry flows through the
-  Micro-XRCE-DDS Agent into ROS2 topics; recorder and analyzer process
-  PX4 data the same way they handle Scout Mini data. M350-class
-  airframe parameters available via `PX4_SYS_AUTOSTART=10025`.
+- **Scene 3 (PX4 SITL drone):** working. Drone takes off, flies a
+  fixed waypoint sweep in offboard mode, and auto-lands — all through
+  a single `ros2 launch` command. M350-class airframe parameters
+  available via `PX4_SYS_AUTOSTART=10025`. Telemetry recorded
+  end-to-end through the Micro-XRCE-DDS Agent.
+- **drone_scenario_runner:** functional. PX4 offboard control via
+  `px4_msgs`, position-based waypoint navigation in NED frame,
+  auto-arm, auto-land, automated mission termination.
 - **Pipeline worlds:** above-ground (pipe rack) and underground-surface
   (corridor with anomaly patches) worlds available in
-  `field_robots_worlds`. The underground-surface world uses textured
-  ground and vegetation. Drone integration with these worlds (mission
-  flight via offboard control) is the next milestone.
+  `field_robots_worlds`. Both use textured ground; the underground
+  world additionally uses textured vegetation patches.
 - **telemetry_recorder:** functional. Native rosbag2, YAML-driven
   configuration, experiment metadata, clean SIGINT handling.
 - **Post-hoc analyzer:** functional. Per-topic timing metrics with
@@ -378,20 +397,33 @@ control, telemetry stabilises further — IMU around 91–92 Hz, odometry
 around 45–46 Hz, with substantially fewer gaps than under bursty
 teleop.
 
-**Scene 3 baseline (single PX4 drone).** With drone taking off,
-hovering, and landing under PX4 commander control, all PX4 output
-topics serialize through the uXRCE-DDS bridge at a uniform rate of
-approximately 86 Hz, regardless of the rates at which PX4 publishes
-internally (which differ per topic, e.g. 100 Hz for
-`vehicle_local_position` vs 250 Hz nominal for `vehicle_attitude`).
-This is a system-level observation: the bridge becomes the effective
-rate ceiling for ROS2-side consumers, and tail latency is dominated
-by bursty publication patterns from the bridge rather than by PX4
-itself. Gap counts on all PX4 topics are uniform (~1860 gaps across
-~13500 messages each in the baseline run), consistent with bridge
-burst patterns rather than per-topic dropouts.
+**Scene 3 baseline (single PX4 drone, teleop).** With the drone taking
+off, hovering, and landing under PX4 commander control (one-shot
+commands from `pxh>` shell), all PX4 output topics serialize through
+the uXRCE-DDS bridge at a uniform rate of approximately 86 Hz,
+regardless of the rates at which PX4 publishes internally (which
+differ per topic, e.g. 100 Hz for `vehicle_local_position` vs 250 Hz
+nominal for `vehicle_attitude`). Gap counts on all PX4 topics are
+uniformly high (~1860 gaps across ~13500 messages each), and p99
+inter-arrival latency is ~27 ms.
 
-### Repeatability check
+**Scene 3 mission (single PX4 drone, offboard waypoints).** With the
+drone flying a continuous offboard mission (5 waypoints, ~80 m path,
+auto-arm and auto-land), the bridge behavior is dramatically
+different. `vehicle_local_position`, `vehicle_attitude`,
+`sensor_combined`, and `battery_status` all stabilise near **99.6 Hz**
+— effectively the full expected rate. Gaps drop from ~1860 to **1–2
+per topic**, and IMU p99 latency drops from 27 ms to **14.5 ms**. This
+indicates that the uXRCE-DDS bridge bottleneck observed in the
+baseline is a function of the **control pattern** (bursty teleop
+commands), not the bridge itself or the underlying hardware. The
+mission's continuous offboard control stream evens out publication
+patterns end-to-end. This is a system-level observation precisely of
+the kind a forward latency model (cf.
+[temporis_ros2](https://github.com/Hippythalamus/temporis_ros2))
+should be able to predict.
+
+### Repeatability check (Scene 2)
 
 Two independent runs of `scenario_navigation.launch.py` on the same
 hardware:
@@ -423,10 +455,12 @@ quantitative baseline for any future anomaly detection work.
   median × 3 gap heuristic flags the long pauses as gaps even when
   the system is healthy. A multi-frame-aware metric is planned.
 - **Bridge-bursted topics report misleading gaps.** PX4 topics
-  delivered through the uXRCE-DDS bridge share the same bimodal
-  inter-arrival pattern (a burst of messages followed by a longer
-  pause). The same gap heuristic above misclassifies these gaps. The
-  fix is the same: a burst-aware metric, to be added to the analyzer.
+  delivered through the uXRCE-DDS bridge under teleop control share
+  the same bimodal inter-arrival pattern. The same gap heuristic above
+  misclassifies these gaps. Under offboard mission control this
+  effectively disappears (~1 gap per topic), confirming that the
+  pattern is control-driven rather than transport-driven. The
+  heuristic will still be updated to handle the teleop case.
 - **Sparse topics trigger spurious gaps.** Topics without a fixed
   publication rate (e.g. teleoperated `cmd_vel`) report misleading
   gap counts. Gap detection will be made opt-in per topic.
@@ -444,6 +478,12 @@ quantitative baseline for any future anomaly detection work.
   throttle, battery cells) but the visible Gazebo model remains the
   default iris quadrotor. A visual model swap is not part of the
   current scope.
+- **Scene 3 mission runs in the default PX4 world.** The
+  field_robots_worlds pipeline environments are loaded standalone
+  for visual reference but not yet integrated with PX4 SITL spawn.
+  The mission trajectory uses coordinates matching the above-ground
+  corridor geometry, so the integration is purely a launch-side
+  concern.
 
 ## On Gazebo Classic and EOL
 
@@ -460,6 +500,7 @@ all four scenes are stable on Classic. The xacro structure here is
 written with that migration in mind: physical descriptions are isolated
 from Gazebo-specific blocks (see scout_mini.gazebo.xacro vs
 scout_mini.urdf.xacro), so only the latter needs to be rewritten.
+
 
 ## License
 
