@@ -412,8 +412,8 @@ drone flying a continuous offboard mission (5 waypoints, ~80 m path,
 auto-arm and auto-land), the bridge behavior is dramatically
 different. `vehicle_local_position`, `vehicle_attitude`,
 `sensor_combined`, and `battery_status` all stabilise near **99.6 Hz**
-— effectively the full expected rate. Gaps drop from ~1860 to **1–2
-per topic**, and IMU p99 latency drops from 27 ms to **14.5 ms**. This
+— effectively the full expected rate. Gaps drop from ~1860 to **0–2
+per topic**, and IMU p99 latency drops from 27 ms to **~15 ms**. This
 indicates that the uXRCE-DDS bridge bottleneck observed in the
 baseline is a function of the **control pattern** (bursty teleop
 commands), not the bridge itself or the underlying hardware. The
@@ -423,7 +423,7 @@ the kind a forward latency model (cf.
 [temporis_ros2](https://github.com/Hippythalamus/temporis_ros2))
 should be able to predict.
 
-### Repeatability check (Scene 2)
+### Repeatability check — Scene 2
 
 Two independent runs of `scenario_navigation.launch.py` on the same
 hardware:
@@ -443,8 +443,32 @@ hardware:
 
 Rates reproduce within ±2.2%; tail latencies within ±6%. The PD
 controller produces a deterministic `cmd_vel` stream; downstream
-variability comes from Gazebo physics and sensor noise. This is the
-quantitative baseline for any future anomaly detection work.
+variability comes from Gazebo physics and sensor noise.
+
+### Repeatability check — Scene 3
+
+Three independent runs of `drone_mission.launch.py` on the same
+hardware (default empty PX4 world; mission trajectory matches the
+above-ground pipeline corridor geometry):
+
+| Metric                                | run_01 | run_02 | run_03 | Spread |
+|---------------------------------------|--------|--------|--------|--------|
+| `vehicle_local_position` rate (Hz)    | 99.60  | 99.59  | 99.66  | ±0.04% |
+| `vehicle_attitude` rate (Hz)          | 99.59  | 99.59  | 99.66  | ±0.04% |
+| `sensor_combined` rate (Hz)           | 99.60  | 99.60  | 99.66  | ±0.03% |
+| `battery_status` rate (Hz)            | 99.64  | 99.58  | 99.66  | ±0.04% |
+| `vehicle_local_position` p99 (ms)     | 14.67  | 16.14  | 16.39  | ±5.5%  |
+| `sensor_combined` p99 (ms)            | 14.47  | 15.68  | 15.88  | ±4.7%  |
+| `vehicle_attitude` p99 (ms)           | 14.50  | 15.86  | 15.93  | ±4.7%  |
+| Gaps per topic                        | 1–2    | 1      | 0      | 0–2    |
+
+Scene 3 reproduces an order of magnitude tighter than Scene 2 on
+publication rate (±0.04% vs ±2.2%). This is consistent with the
+system having fewer degrees of freedom: one drone instead of three
+robots, offboard position control instead of PD velocity control.
+Tail latency reproducibility (±5%) is comparable between the two
+scenes. Both are working quantitative baselines for any future
+anomaly detection work.
 
 ## Known limitations
 
@@ -471,7 +495,7 @@ quantitative baseline for any future anomaly detection work.
   injected jitter, extra subscribers) are the next experimental
   layer.
 - **Deterministic seeds not yet fixed.** Sensor noise uses
-  Gazebo's default seeding; repeatability is statistical (see table
+  Gazebo's default seeding; repeatability is statistical (see tables
   above), not bit-identical.
 - **Scene 3 drone visual is unchanged.** The M350-class airframe
   changes flight parameters (mass, max speed, tilt limits, hover
@@ -481,7 +505,7 @@ quantitative baseline for any future anomaly detection work.
 - **Scene 3 mission runs in the default PX4 world.** The
   field_robots_worlds pipeline environments are loaded standalone
   for visual reference but not yet integrated with PX4 SITL spawn.
-  The mission trajectory uses coordinates matching the above-ground
+  The mission trajectory uses NED coordinates matching the above-ground
   corridor geometry, so the integration is purely a launch-side
   concern.
 
@@ -500,7 +524,6 @@ all four scenes are stable on Classic. The xacro structure here is
 written with that migration in mind: physical descriptions are isolated
 from Gazebo-specific blocks (see scout_mini.gazebo.xacro vs
 scout_mini.urdf.xacro), so only the latter needs to be rewritten.
-
 
 ## License
 
