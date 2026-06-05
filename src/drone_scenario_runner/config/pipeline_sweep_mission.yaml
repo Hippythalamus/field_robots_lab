@@ -1,0 +1,20 @@
+# Drone inspection mission: linear sweep along above-ground pipeline corridor.
+#
+# Pipeline corridor runs along x-axis in pipeline_above_ground.world.
+# We fly above the pipes at z = -5 (5m altitude in NED).
+#
+# Mission profile (NED coordinates):
+#   1. Takeoff straight up to 5m altitude
+#   2. Transit to corridor start (west end)
+#   3. Sweep east along pipeline
+#   4. Reverse sweep west
+#   5. Return to launch
+#   6. Auto-land
+
+drone_waypoint_navigator:
+  ros__parameters:
+    waypoints: "[[0.0, 0.0, -5.0], [-20.0, 0.0, -5.0], [20.0, 0.0, -5.0], [-20.0, 0.0, -5.0], [0.0, 0.0, -5.0]]"
+    tolerance: 0.5
+    cruise_speed: 3.0
+    control_rate_hz: 50.0
+    mission_start_delay_s: 5.0
