@@ -1,0 +1,35 @@
+--- wheel.urdf.xacro.bak	2026-06-10 05:52:59.425092229 +0200
++++ wheel.urdf.xacro	2026-06-10 05:53:04.384627550 +0200
+@@ -1,8 +1,6 @@
+ <?xml version="1.0"?>
+-
+ <robot xmlns:xacro="http://ros.org/wiki/xacro" name="husky_wheel">
+-
+-  <xacro:macro name="husky_wheel" params="wheel_prefix *joint_pose">
++  <xacro:macro name="husky_wheel" params="wheel_prefix prefix:='' *joint_pose">
+     <link name="${wheel_prefix}_wheel">
+       <inertial>
+         <mass value="2.637" />
+@@ -22,7 +20,6 @@
+         </geometry>
+       </collision>
+     </link>
+-
+     <gazebo reference="${wheel_prefix}_wheel">
+       <mu1 value="1.0"/>
+       <mu2 value="0.5"/>
+@@ -30,13 +27,11 @@
+       <kd value="1.0" />
+       <fdir1 value="1 0 0"/>
+     </gazebo>
+-
+     <joint name="${wheel_prefix}_wheel_joint" type="continuous">
+-      <parent link="base_link"/>
++      <parent link="${prefix}base_link"/>
+       <child link="${wheel_prefix}_wheel"/>
+       <xacro:insert_block name="joint_pose"/>
+       <axis xyz="0 1 0" rpy="0 0 0" />
+     </joint>
+-
+   </xacro:macro>
+ </robot>

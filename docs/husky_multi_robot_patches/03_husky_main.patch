@@ -1,0 +1,32 @@
+--- husky.urdf.xacro.bak2	2026-06-10 13:58:55.037345782 +0200
++++ husky.urdf.xacro	2026-06-10 14:10:17.007289180 +0200
+@@ -17,11 +17,27 @@
+   <xacro:if value="$(arg is_sim)">
+ 
+     <gazebo>
+-      <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
++      <plugin name="skid_steer_controller" filename="libgazebo_ros_diff_drive.so">
+         <ros>
+           <namespace>$(arg robot_namespace)</namespace>
+         </ros>
+-        <parameters>$(arg gazebo_controllers)</parameters>
++        <update_rate>50</update_rate>
++        <num_wheel_pairs>2</num_wheel_pairs>
++        <left_joint>$(arg prefix)front_left_wheel_joint</left_joint>
++        <right_joint>$(arg prefix)front_right_wheel_joint</right_joint>
++        <left_joint>$(arg prefix)rear_left_wheel_joint</left_joint>
++        <right_joint>$(arg prefix)rear_right_wheel_joint</right_joint>
++        <wheel_separation>0.5709</wheel_separation>
++        <wheel_separation>0.5709</wheel_separation>
++        <wheel_diameter>0.3302</wheel_diameter>
++        <wheel_diameter>0.3302</wheel_diameter>
++        <max_wheel_torque>50.0</max_wheel_torque>
++        <max_wheel_acceleration>2.0</max_wheel_acceleration>
++        <publish_odom>true</publish_odom>
++        <publish_odom_tf>true</publish_odom_tf>
++        <publish_wheel_tf>false</publish_wheel_tf>
++        <odometry_frame>$(arg prefix)odom</odometry_frame>
++        <robot_base_frame>$(arg prefix)base_link</robot_base_frame>
+       </plugin>
+     </gazebo>
+ 
