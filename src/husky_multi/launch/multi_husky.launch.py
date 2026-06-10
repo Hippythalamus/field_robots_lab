@@ -109,8 +109,10 @@ def generate_launch_description():
     # World argument (empty for now, will be tank_farm.world later)
     world_arg = DeclareLaunchArgument(
         'world',
-        default_value='',
-        description='Gazebo world file path (empty = default empty.world)'
+        default_value=PathJoinSubstitution(
+            [FindPackageShare('field_robots_worlds'), 'worlds', 'tank_farm.world']
+        ),
+        description='Gazebo world file path'
     )
 
     # Gazebo server
