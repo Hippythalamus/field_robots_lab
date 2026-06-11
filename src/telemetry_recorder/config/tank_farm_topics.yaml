@@ -1,0 +1,103 @@
+# Topics to record for Scene 4: Husky multi-robot tank farm patrol.
+#
+# Three Husky A200 robots in namespaces robot_1, robot_2, robot_3.
+# Each robot publishes IMU at ~83 Hz, odometry at ~38 Hz from skid-steer
+# plugin, joint_states at ~47 Hz from gazebo_ros2_control hardware.
+#
+# Beyond the standard sensor topics, this scenario adds two custom
+# telemetry hooks:
+#
+#   /scenario_runner/start          — latched barrier signal that releases
+#                                     all three navigators simultaneously
+#                                     after every robot has spawned.
+#   /robot_N/inspection_event       — per-robot JSON events emitted at
+#                                     each tank: inspection_started and
+#                                     inspection_completed (with synthetic
+#                                     pressure/methane readings and the
+#                                     continue/flag/escalate decision).
+#
+# Together they realise the J hook (rich telemetry beyond standard topics)
+# and the D hook (decision-point mission integrity) called for in the
+# RideScan submission.
+
+experiment:
+  scene: "04_tank_farm_patrol"
+  robot: "husky_a200_x3"
+
+topics:
+  # === robot_1: deep patrol (covers tank_3 and tank_6) ===
+  - name: /robot_1/imu/data_raw
+    description: "robot_1 IMU raw at ~83 Hz"
+    expected_rate_hz: 83
+  - name: /robot_1/odom
+    description: "robot_1 odometry from skid-steer plugin"
+    expected_rate_hz: 38
+  - name: /robot_1/cmd_vel
+    description: "robot_1 velocity commands from navigator"
+    expected_rate_hz: null
+  - name: /robot_1/joint_states
+    description: "robot_1 wheel joint states"
+    expected_rate_hz: 47
+  - name: /robot_1/gps/data
+    description: "robot_1 GPS NavSatFix"
+    expected_rate_hz: null
+  - name: /robot_1/inspection_event
+    description: "robot_1 inspection events (started/completed, decision JSON)"
+    expected_rate_hz: null
+
+  # === robot_2: north sector (tank_1, tank_2) ===
+  - name: /robot_2/imu/data_raw
+    description: "robot_2 IMU raw at ~83 Hz"
+    expected_rate_hz: 83
+  - name: /robot_2/odom
+    description: "robot_2 odometry from skid-steer plugin"
+    expected_rate_hz: 38
+  - name: /robot_2/cmd_vel
+    description: "robot_2 velocity commands from navigator"
+    expected_rate_hz: null
+  - name: /robot_2/joint_states
+    description: "robot_2 wheel joint states"
+    expected_rate_hz: 47
+  - name: /robot_2/gps/data
+    description: "robot_2 GPS NavSatFix"
+    expected_rate_hz: null
+  - name: /robot_2/inspection_event
+    description: "robot_2 inspection events (started/completed, decision JSON)"
+    expected_rate_hz: null
+
+  # === robot_3: south sector (tank_4, tank_5) ===
+  - name: /robot_3/imu/data_raw
+    description: "robot_3 IMU raw at ~83 Hz"
+    expected_rate_hz: 83
+  - name: /robot_3/odom
+    description: "robot_3 odometry from skid-steer plugin"
+    expected_rate_hz: 38
+  - name: /robot_3/cmd_vel
+    description: "robot_3 velocity commands from navigator"
+    expected_rate_hz: null
+  - name: /robot_3/joint_states
+    description: "robot_3 wheel joint states"
+    expected_rate_hz: 47
+  - name: /robot_3/gps/data
+    description: "robot_3 GPS NavSatFix"
+    expected_rate_hz: null
+  - name: /robot_3/inspection_event
+    description: "robot_3 inspection events (started/completed, decision JSON)"
+    expected_rate_hz: null
+
+  # === shared / scenario-wide ===
+  - name: /scenario_runner/start
+    description: "Latched barrier signal — all navigators start together"
+    expected_rate_hz: null
+  - name: /tf
+    description: "TF tree updates from all robots"
+    expected_rate_hz: null
+  - name: /tf_static
+    description: "Static TFs (sensor mounts) from all robots"
+    expected_rate_hz: null
+  - name: /clock
+    description: "Simulation clock"
+    expected_rate_hz: 250
+
+storage:
+  format: mcap

@@ -1,0 +1,112 @@
+# Tank farm patrol scenario for Husky multi-robot fleet.
+#
+# Three Husky A200 robots patrol six aboveground storage tanks. Tanks are
+# arranged in two columns (north Y=+12, south Y=-12) by three rows
+# (X=16, 28, 40). Each tank is inspected by exactly one robot per run.
+#
+# Patrol assignment:
+#   robot_1 — deep patrol, covers the two far-end tanks tank_3 and tank_6
+#             (the integrity-issue tanks). Longest mission distance.
+#   robot_2 — north sector, covers near-end tank_1 and middle tank_2.
+#   robot_3 — south sector, covers near-end tank_4 and middle tank_5.
+#
+# Each robot performs an inspection at every approach pose: it dwells for
+# 2s, synthesises a deterministic pressure + methane reading for that
+# tank, evaluates against thresholds (15 bar, 100 ppm), and publishes a
+# structured inspection_event. The same readings repeat across runs, so
+# any deviation in decisions or telemetry shape across the 15-run
+# sequence reflects an integrity issue rather than stochastic variation.
+#
+# Start barrier: all three navigators wait for /scenario_runner/start
+# before driving. The mission_starter node publishes start once every
+# robot has reported its first odometry message, removing the spawn-order
+# drift that would otherwise contaminate run-to-run timing.
+
+scenario:
+  name: "tank_farm_patrol"
+  description: "3 Husky fleet patrolling 6 ASTs with per-tank inspections"
+
+  pd_params:
+    tolerance: 0.5
+    kp_linear: 0.6
+    kp_angular: 1.4
+    kd_angular: 0.25
+    max_linear: 0.7
+    max_angular: 1.0
+    control_rate_hz: 20.0
+    start_delay_s: 5.0        # legacy fallback only; barrier preferred
+
+  inspection:
+    dwell_s: 2.0
+    pressure_threshold_bar: 15.0
+    methane_threshold_ppm: 100.0
+
+  start_barrier:
+    enabled: true
+    topic: "/scenario_runner/start"
+    settle_s: 2.0             # after last robot ready, before releasing
+
+robots:
+  # --- robot_1: deep patrol, far tanks (tank_3, tank_6) ---
+  - id: 1
+    namespace: robot_1
+    spawn: [0.0, 0.0]
+    waypoints:
+      - [10.0,  0.0]          # 0: corridor entry
+      - [22.0,  0.0]          # 1: midpoint between columns
+      - [40.0,  6.0]          # 2: approach tank_3 (north far)
+      - [40.0, -6.0]          # 3: cross to tank_6 (south far)
+      - [22.0,  0.0]          # 4: return midpoint
+      - [10.0,  0.0]          # 5: corridor exit
+      - [0.0,   0.0]          # 6: return spawn
+    inspection_points:
+      "2":
+        tank_id: tank_3
+        pressure: 10.4
+        methane: 105.0        # ABOVE methane threshold -> flag
+      "3":
+        tank_id: tank_6
+        pressure: 16.5        # ABOVE pressure threshold
+        methane: 115.0        # AND ABOVE methane threshold -> escalate
+
+  # --- robot_2: north sector (tank_1, tank_2) ---
+  - id: 2
+    namespace: robot_2
+    spawn: [0.0, 3.0]
+    waypoints:
+      - [10.0,  3.0]          # 0: corridor entry
+      - [16.0,  6.0]          # 1: approach tank_1
+      - [28.0,  6.0]          # 2: approach tank_2
+      - [28.0,  3.0]          # 3: turn back
+      - [10.0,  3.0]          # 4: corridor exit
+      - [0.0,   3.0]          # 5: return spawn
+    inspection_points:
+      "1":
+        tank_id: tank_1
+        pressure: 8.0
+        methane: 15.0
+      "2":
+        tank_id: tank_2
+        pressure: 9.2
+        methane: 23.0
+
+  # --- robot_3: south sector (tank_4, tank_5) ---
+  - id: 3
+    namespace: robot_3
+    spawn: [0.0, -3.0]
+    waypoints:
+      - [10.0, -3.0]          # 0: corridor entry
+      - [16.0, -6.0]          # 1: approach tank_4
+      - [28.0, -6.0]          # 2: approach tank_5
+      - [28.0, -3.0]          # 3: turn back
+      - [10.0, -3.0]          # 4: corridor exit
+      - [0.0,  -3.0]          # 5: return spawn
+    inspection_points:
+      "1":
+        tank_id: tank_4
+        pressure: 11.6
+        methane: 39.0
+      "2":
+        tank_id: tank_5
+        pressure: 12.8
+        methane: 47.0
