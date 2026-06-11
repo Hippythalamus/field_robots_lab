@@ -6,7 +6,7 @@ package_name = 'scenario_runner'
 
 setup(
     name=package_name,
-    version='0.2.0',
+    version='0.3.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -27,7 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
             'waypoint_navigator = scenario_runner.waypoint_navigator:main',
-            'mission_starter = scenario_runner.mission_starter:main',
+            'mission_orchestrator = scenario_runner.mission_orchestrator:main',
         ],
     },
 )

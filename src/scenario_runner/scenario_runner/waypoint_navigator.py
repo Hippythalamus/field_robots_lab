@@ -1,14 +1,27 @@
 """
-Waypoint navigator with optional barrier sync and inspection logic.
+Waypoint navigator with symmetric barriers and inspection logic.
 
 Subscribes to odometry, publishes to cmd_vel. Both topics resolve
 relative to the node's namespace; multiple instances run in parallel
 by launching each in its own namespace.
 
+Symmetric barriers
+------------------
 If use_start_barrier is True (default), the navigator waits for a
 latched Bool(True) on /scenario_runner/start before driving. This
-eliminates spawn-order drift between robots: all three start within
-the same control tick once mission_starter releases the barrier.
+eliminates spawn-order drift between robots: all start within the
+same control tick once mission_orchestrator releases the barrier.
+
+When the mission finishes (all waypoints reached), the navigator
+publishes Bool(True) on its own mission_status topic (resolved to
+/<namespace>/mission_status). The orchestrator collects these and
+publishes /scenario_runner/complete when all robots are done.
+
+Inspection
+----------
+At designated waypoints the robot stops, dwells, generates a
+deterministic synthetic reading (pressure, methane), evaluates
+against thresholds, and publishes a structured inspection_event.
 """
 
 import json
@@ -23,6 +36,14 @@ from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSReliabilityPolicy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from std_msgs.msg import String, Bool
+
+
+def latched_qos() -> QoSProfile:
+    return QoSProfile(
+        depth=1,
+        reliability=QoSReliabilityPolicy.RELIABLE,
+        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+    )
 
 
 def yaw_from_quaternion(q) -> float:
@@ -126,20 +147,22 @@ class WaypointNavigator(Node):
         self.inspection_start_time: Optional[float] = None
         self.inspection_emitted = False
 
+        # Publishers
         self.cmd_pub = self.create_publisher(Twist, 'cmd_vel', 10)
         self.event_pub = self.create_publisher(String, 'inspection_event', 10)
+        # Finish signal — latched so the orchestrator never misses it,
+        # even if it subscribes a moment after we finish.
+        self.status_pub = self.create_publisher(
+            Bool, 'mission_status', latched_qos()
+        )
+
         self.odom_sub = self.create_subscription(
             Odometry, 'odom', self._on_odom, 20
         )
 
         if self.use_start_barrier:
-            latched_qos = QoSProfile(
-                depth=1,
-                reliability=QoSReliabilityPolicy.RELIABLE,
-                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-            )
             self.start_sub = self.create_subscription(
-                Bool, barrier_topic, self._on_start_signal, latched_qos
+                Bool, barrier_topic, self._on_start_signal, latched_qos()
             )
             self.get_logger().info(
                 f'Waiting for start signal on {barrier_topic}'
@@ -218,22 +241,17 @@ class WaypointNavigator(Node):
     def _control_step(self):
         if not self.have_odom:
             return
-
         if not self.barrier_released:
             return
-
         if not self.use_start_barrier and self.mission_start_time is None:
             if time.time() - self.start_time < self.start_delay_s:
                 return
             self.mission_start_time = time.time()
-
         if self.finished:
             return
-
         if self.current_wp_idx >= len(self.waypoints):
             self._finish()
             return
-
         if self.wp_start_time is None:
             self.wp_start_time = time.time()
             self.get_logger().info(
@@ -246,13 +264,11 @@ class WaypointNavigator(Node):
         if self.inspection_active:
             self._publish_zero()
             inspection_elapsed = time.time() - self.inspection_start_time
-
             if not self.inspection_emitted:
                 if inspection_elapsed >= self.inspection_dwell_s / 2.0:
                     spec = self.inspection_points[self.current_wp_idx]
                     self._emit_inspection(self.current_wp_idx, spec)
                     self.inspection_emitted = True
-
             if inspection_elapsed >= self.inspection_dwell_s:
                 self.current_wp_idx += 1
                 self.wp_start_time = None
@@ -274,7 +290,6 @@ class WaypointNavigator(Node):
                 f'Reached waypoint {self.current_wp_idx + 1} in '
                 f'{wp_elapsed:.1f}s (dist {distance:.2f}m)'
             )
-
             if self.current_wp_idx in self.inspection_points:
                 spec = self.inspection_points[self.current_wp_idx]
                 self.inspection_active = True
@@ -283,7 +298,6 @@ class WaypointNavigator(Node):
                 self._emit_inspection_started(self.current_wp_idx, spec)
                 self._publish_zero()
                 return
-
             self.current_wp_idx += 1
             self.wp_start_time = None
             self.prev_heading_error = 0.0
@@ -292,11 +306,9 @@ class WaypointNavigator(Node):
         dt = 1.0 / 20.0
         d_heading = (heading_error - self.prev_heading_error) / dt
         self.prev_heading_error = heading_error
-
         angular_z = (self.kp_angular * heading_error +
                      self.kd_angular * d_heading)
         angular_z = max(-self.max_angular, min(self.max_angular, angular_z))
-
         heading_gate = max(0.0, math.cos(heading_error))
         linear_x = self.kp_linear * distance * heading_gate
         linear_x = max(0.0, min(self.max_linear, linear_x))
@@ -314,13 +326,22 @@ class WaypointNavigator(Node):
         elapsed = time.time() - ref
         self.get_logger().info(
             f'All {len(self.waypoints)} waypoints reached in '
-            f'{elapsed:.1f}s. Exiting.'
+            f'{elapsed:.1f}s. Publishing mission_status=True.'
         )
-        self.create_timer(0.5, self._shutdown_once)
+        status = Bool()
+        status.data = True
+        self.status_pub.publish(status)
+        # Keep the node alive so the orchestrator definitely sees the
+        # latched status message. The runner script issues a SIGINT
+        # once /scenario_runner/complete fires, which exits cleanly.
 
-    def _shutdown_once(self):
-        self._publish_zero()
-        rclpy.shutdown()
+    def destroy_node(self):
+        # Stop the robot on shutdown
+        try:
+            self._publish_zero()
+        except Exception:
+            pass
+        super().destroy_node()
 
 
 def main(args=None):

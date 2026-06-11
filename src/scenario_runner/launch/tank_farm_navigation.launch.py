@@ -4,9 +4,11 @@ Scenario: tank farm patrol with Husky multi-robot fleet.
 Orchestrates a deterministic repeatable run:
   - Gazebo with tank_farm.world
   - 3 Husky A200 robots in namespaces robot_1, robot_2, robot_3
-  - mission_starter (barrier): waits for all three to report odom,
-    then publishes start
-  - 3 waypoint_navigator instances, each waiting on the barrier
+  - mission_orchestrator: dual barrier
+      * start barrier  /scenario_runner/start    — releases navigators
+      * finish barrier /scenario_runner/complete — fires when all done
+  - 3 waypoint_navigator instances, each waiting on the start barrier
+    and publishing mission_status when finished
   - telemetry_recorder writing to a timestamped experiment dir
 """
 
@@ -82,19 +84,20 @@ def generate_launch_description():
         )
         actions.append(recorder)
 
-    if barrier_enabled:
-        starter = Node(
-            package='scenario_runner',
-            executable='mission_starter',
-            name='mission_starter',
-            output='screen',
-            parameters=[{
-                'robot_namespaces': robot_namespaces,
-                'settle_s': barrier_settle,
-                'odom_topic': 'odom',
-            }],
-        )
-        actions.append(starter)
+    # Mission orchestrator: handles both barriers (start + complete)
+    orchestrator = Node(
+        package='scenario_runner',
+        executable='mission_orchestrator',
+        name='mission_orchestrator',
+        output='screen',
+        parameters=[{
+            'robot_namespaces': robot_namespaces,
+            'settle_s': barrier_settle,
+            'odom_topic': 'odom',
+            'status_topic': 'mission_status',
+        }],
+    )
+    actions.append(orchestrator)
 
     for robot in scenario['robots']:
         waypoints_json = json.dumps(robot['waypoints'])

@@ -1,24 +1,29 @@
 # Topics to record for Scene 4: Husky multi-robot tank farm patrol.
 #
 # Three Husky A200 robots in namespaces robot_1, robot_2, robot_3.
-# Each robot publishes IMU at ~83 Hz, odometry at ~38 Hz from skid-steer
-# plugin, joint_states at ~47 Hz from gazebo_ros2_control hardware.
+# Each robot publishes IMU at ~83 Hz, odometry at ~38 Hz from the
+# skid-steer plugin, joint_states at ~47 Hz from the controller plugin.
 #
-# Beyond the standard sensor topics, this scenario adds two custom
-# telemetry hooks:
+# Beyond standard sensor topics, this scenario records three custom
+# telemetry hooks that together realise the J + D submission angles:
 #
-#   /scenario_runner/start          — latched barrier signal that releases
-#                                     all three navigators simultaneously
-#                                     after every robot has spawned.
-#   /robot_N/inspection_event       — per-robot JSON events emitted at
-#                                     each tank: inspection_started and
-#                                     inspection_completed (with synthetic
-#                                     pressure/methane readings and the
-#                                     continue/flag/escalate decision).
+#   /scenario_runner/start         — latched start barrier. Released by
+#                                    mission_orchestrator once every
+#                                    robot has reported its first odom.
+#   /scenario_runner/complete      — latched finish barrier. Fires once
+#                                    every navigator publishes Bool(True)
+#                                    on its mission_status topic.
+#   /robot_<N>/mission_status      — per-robot finished signal published
+#                                    by the navigator when its waypoint
+#                                    list is exhausted.
+#   /robot_<N>/inspection_event    — per-robot JSON events at each tank
+#                                    (inspection_started + completed,
+#                                    with synthetic pressure/methane
+#                                    readings and continue/flag/escalate
+#                                    decisions).
 #
-# Together they realise the J hook (rich telemetry beyond standard topics)
-# and the D hook (decision-point mission integrity) called for in the
-# RideScan submission.
+# The two barriers in the bag give a clean mission-time window for
+# downstream alignment across the 15-run calibration baseline.
 
 experiment:
   scene: "04_tank_farm_patrol"
@@ -44,6 +49,9 @@ topics:
   - name: /robot_1/inspection_event
     description: "robot_1 inspection events (started/completed, decision JSON)"
     expected_rate_hz: null
+  - name: /robot_1/mission_status
+    description: "robot_1 finished signal (Bool, latched)"
+    expected_rate_hz: null
 
   # === robot_2: north sector (tank_1, tank_2) ===
   - name: /robot_2/imu/data_raw
@@ -63,6 +71,9 @@ topics:
     expected_rate_hz: null
   - name: /robot_2/inspection_event
     description: "robot_2 inspection events (started/completed, decision JSON)"
+    expected_rate_hz: null
+  - name: /robot_2/mission_status
+    description: "robot_2 finished signal (Bool, latched)"
     expected_rate_hz: null
 
   # === robot_3: south sector (tank_4, tank_5) ===
@@ -84,10 +95,16 @@ topics:
   - name: /robot_3/inspection_event
     description: "robot_3 inspection events (started/completed, decision JSON)"
     expected_rate_hz: null
+  - name: /robot_3/mission_status
+    description: "robot_3 finished signal (Bool, latched)"
+    expected_rate_hz: null
 
   # === shared / scenario-wide ===
   - name: /scenario_runner/start
-    description: "Latched barrier signal — all navigators start together"
+    description: "Latched start barrier — all navigators begin together"
+    expected_rate_hz: null
+  - name: /scenario_runner/complete
+    description: "Latched finish barrier — all navigators have finished"
     expected_rate_hz: null
   - name: /tf
     description: "TF tree updates from all robots"
