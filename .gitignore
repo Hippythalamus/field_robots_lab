@@ -36,3 +36,4 @@ Thumbs.db
 # Sensitive
 *.pem
 *.key
+*.bak
