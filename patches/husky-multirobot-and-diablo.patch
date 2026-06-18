@@ -1,0 +1,444 @@
+diff --git a/husky_control/config/control.yaml b/husky_control/config/control.yaml
+index b12fd0f..cc359ef 100644
+--- a/husky_control/config/control.yaml
++++ b/husky_control/config/control.yaml
+@@ -1,6 +1,6 @@
+ controller_manager:
+   ros__parameters:
+-    update_rate: 10 # Hz
++    update_rate: 50 # Hz
+ 
+     joint_state_broadcaster:
+       type: joint_state_broadcaster/JointStateBroadcaster
+diff --git a/husky_description/urdf/decorations.urdf.xacro b/husky_description/urdf/decorations.urdf.xacro
+index 6355b88..8eef51b 100644
+--- a/husky_description/urdf/decorations.urdf.xacro
++++ b/husky_description/urdf/decorations.urdf.xacro
+@@ -10,13 +10,13 @@
+   <material name="white"><color rgba="1.0 1.0 1.0 1.0" /></material>
+   <material name="red"><color rgba="1.0 0.0 0.0 1.0" /></material>
+ 
+-  <xacro:macro name="husky_decorate">
++  <xacro:macro name="husky_decorate" params="prefix">
+ 
+     <xacro:property name="husky_front_bumper_extend" value="$(optenv HUSKY_FRONT_BUMPER_EXTEND 0)" />
+     <xacro:property name="husky_rear_bumper_extend" value="$(optenv HUSKY_REAR_BUMPER_EXTEND 0)" />
+ 
+     <!-- Spawn Husky chassis -->
+-    <link name="top_chassis_link">
++    <link name="${prefix}top_chassis_link">
+       <visual>
+         <origin xyz="0 0 0" rpy="0 0 0" />
+         <geometry>
+@@ -26,14 +26,14 @@
+     </link>
+ 
+     <!-- Attach chassis to the robot -->
+-    <joint name="top_chassis_joint" type="fixed">
+-      <parent link="base_link" />
+-      <child link="top_chassis_link" />
++    <joint name="${prefix}top_chassis_joint" type="fixed">
++      <parent link="${prefix}base_link" />
++      <child link="${prefix}top_chassis_link" />
+     </joint>
+ 
+     <xacro:if value="$(optenv HUSKY_USER_RAIL_ENABLED true)">
+       <!-- Spawn user rails -->
+-      <link name="user_rail_link">
++      <link name="${prefix}user_rail_link">
+         <visual>
+           <geometry>
+             <mesh filename="package://husky_description/meshes/user_rail.dae" />
+@@ -42,15 +42,15 @@
+       </link>
+ 
+       <!-- Attach user rails to base link -->
+-      <joint name="user_rail" type="fixed">
++      <joint name="${prefix}user_rail" type="fixed">
+         <origin xyz="0.272 0 0.245" rpy="0 0 0" />
+-        <parent link="base_link" />
+-        <child link="user_rail_link" />
++        <parent link="${prefix}base_link" />
++        <child link="${prefix}user_rail_link" />
+       </joint>
+     </xacro:if>
+ 
+     <!-- Spawn front bumper link -->
+-    <link name="front_bumper_link">
++    <link name="${prefix}front_bumper_link">
+       <visual>
+         <geometry>
+           <mesh filename="package://husky_description/meshes/bumper.dae" />
+@@ -59,14 +59,14 @@
+     </link>
+ 
+     <!-- Attach front bumper -->
+-    <joint name="front_bumper" type="fixed">
++    <joint name="${prefix}front_bumper" type="fixed">
+       <origin xyz="${0.48 + husky_front_bumper_extend} 0 0.091" rpy="0 0 0" />
+-      <parent link="base_link" />
+-      <child link="front_bumper_link" />
++      <parent link="${prefix}base_link" />
++      <child link="${prefix}front_bumper_link" />
+     </joint>
+ 
+     <xacro:if value="${husky_front_bumper_extend}">
+-      <link name="front_bumper_extension_link">
++      <link name="${prefix}front_bumper_extension_link">
+           <visual>
+               <geometry>
+                   <mesh filename="package://husky_description/meshes/bumper_extension.dae" />
+@@ -74,15 +74,15 @@
+           </visual>
+       </link>
+ 
+-      <joint name="front_bumper_extension" type="fixed">
++      <joint name="${prefix}front_bumper_extension" type="fixed">
+         <origin xyz="${0.48 + husky_front_bumper_extend} 0 0.091" rpy="0 0 0" />
+-        <parent link="base_link" />
+-        <child link="front_bumper_extension_link" />
++        <parent link="${prefix}base_link" />
++        <child link="${prefix}front_bumper_extension_link" />
+       </joint>
+     </xacro:if>
+ 
+     <!-- Spawn rear bumper link -->
+-    <link name="rear_bumper_link">
++    <link name="${prefix}rear_bumper_link">
+       <visual>
+         <geometry>
+           <mesh filename="package://husky_description/meshes/bumper.dae" />
+@@ -91,14 +91,14 @@
+     </link>
+ 
+     <!-- Attach rear bumper -->
+-    <joint name="rear_bumper" type="fixed">
++    <joint name="${prefix}rear_bumper" type="fixed">
+       <origin xyz="${-0.48 - husky_rear_bumper_extend} 0 0.091" rpy="0 0 ${M_PI}" />
+-      <parent link="base_link" />
+-      <child link="rear_bumper_link" />
++      <parent link="${prefix}base_link" />
++      <child link="${prefix}rear_bumper_link" />
+     </joint>
+ 
+     <xacro:if value="${husky_rear_bumper_extend}">
+-      <link name="rear_bumper_extension_link">
++      <link name="${prefix}rear_bumper_extension_link">
+           <visual>
+               <geometry>
+                   <mesh filename="package://husky_description/meshes/bumper_extension.dae" />
+@@ -106,17 +106,17 @@
+           </visual>
+       </link>
+ 
+-      <joint name="rear_bumper_extension" type="fixed">
++      <joint name="${prefix}rear_bumper_extension" type="fixed">
+         <origin xyz="${-0.48 - husky_rear_bumper_extend} 0 0.091" rpy="0 0 ${M_PI}" />
+-        <parent link="base_link" />
+-        <child link="rear_bumper_extension_link" />
++        <parent link="${prefix}base_link" />
++        <child link="${prefix}rear_bumper_extension_link" />
+       </joint>
+     </xacro:if>
+ 
+     <xacro:if value="$(optenv HUSKY_TOP_PLATE_ENABLED true)">
+       <!-- Spawn the top plate -->
+       <xacro:if value="$(optenv HUSKY_LARGE_TOP_PLATE false)">
+-        <link name="top_plate_link">
++        <link name="${prefix}top_plate_link">
+           <visual>
+             <origin xyz="0 0 0" rpy="0 0 0" />
+             <geometry>
+@@ -131,27 +131,27 @@
+           </collision>
+         </link>
+         <!-- Attach top plate -->
+-        <joint name="top_plate_joint" type="fixed">
+-          <parent link="base_link" />
+-          <child link="top_plate_link"/>
++        <joint name="${prefix}top_plate_joint" type="fixed">
++          <parent link="${prefix}base_link" />
++          <child link="${prefix}top_plate_link"/>
+           <origin xyz="0.0812 0 0.225" rpy="0 0 0"/>
+         </joint>
+         <!-- Top plate front link -->
+-        <joint name="top_plate_front_joint" type="fixed">
+-          <parent link="top_plate_link" />
+-          <child link="top_plate_front_link"/>
++        <joint name="${prefix}top_plate_front_joint" type="fixed">
++          <parent link="${prefix}top_plate_link" />
++          <child link="${prefix}top_plate_front_link"/>
+           <origin xyz="0.4125 0 0.00672" rpy="0 0 0"/>
+         </joint>
+         <!-- Top plate rear link-->
+-        <joint name="top_plate_rear_joint" type="fixed">
+-          <parent link="top_plate_link" />
+-          <child link="top_plate_rear_link"/>
++        <joint name="${prefix}top_plate_rear_joint" type="fixed">
++          <parent link="${prefix}top_plate_link" />
++          <child link="${prefix}top_plate_rear_link"/>
+           <origin xyz="-0.4125 0 0.00672" rpy="0 0 0"/>
+         </joint>
+       </xacro:if>
+ 
+       <xacro:unless value="$(optenv HUSKY_LARGE_TOP_PLATE false)">
+-        <link name="top_plate_link">
++        <link name="${prefix}top_plate_link">
+           <visual>
+             <origin xyz="0 0 0" rpy="0 0 0" />
+             <geometry>
+@@ -166,26 +166,26 @@
+           </collision>
+         </link>
+         <!-- Attach top plate -->
+-        <joint name="top_plate_joint" type="fixed">
+-          <parent link="base_link" />
+-          <child link="top_plate_link"/>
++        <joint name="${prefix}top_plate_joint" type="fixed">
++          <parent link="${prefix}base_link" />
++          <child link="${prefix}top_plate_link"/>
+           <origin xyz="0.0812 0 0.245" rpy="0 0 0"/>
+         </joint>
+         <!-- Top plate front link -->
+-        <joint name="top_plate_front_joint" type="fixed">
+-          <parent link="top_plate_link" />
+-          <child link="top_plate_front_link"/>
++        <joint name="${prefix}top_plate_front_joint" type="fixed">
++          <parent link="${prefix}top_plate_link" />
++          <child link="${prefix}top_plate_front_link"/>
+           <origin xyz="0.36367 0 0.00639" rpy="0 0 0"/>
+         </joint>
+         <!-- Top plate rear link-->
+-        <joint name="top_plate_rear_joint" type="fixed">
+-          <parent link="top_plate_link" />
+-          <child link="top_plate_rear_link"/>
++        <joint name="${prefix}top_plate_rear_joint" type="fixed">
++          <parent link="${prefix}top_plate_link" />
++          <child link="${prefix}top_plate_rear_link"/>
+           <origin xyz="-0.36633 0 0.00639" rpy="0 0 0"/>
+         </joint>
+       </xacro:unless>
+-      <link name="top_plate_front_link"/>
+-      <link name="top_plate_rear_link"/>
++      <link name="${prefix}top_plate_front_link"/>
++      <link name="${prefix}top_plate_rear_link"/>
+     </xacro:if>
+ 
+   </xacro:macro>
+diff --git a/husky_description/urdf/husky.urdf.xacro b/husky_description/urdf/husky.urdf.xacro
+index 5f212bf..8553689 100644
+--- a/husky_description/urdf/husky.urdf.xacro
++++ b/husky_description/urdf/husky.urdf.xacro
+@@ -5,27 +5,56 @@
+   <!-- <xacro:arg name="name" default="" /> -->
+ 
+   <xacro:arg name="prefix" default="" />
++  <xacro:arg name="robot_namespace" default="" />
+   <xacro:arg name="gazebo_controllers" default="$(find husky_control)/config/control.yaml" />
+ 
++  <xacro:arg name="with_selection_ring" default="false" />
++  <xacro:arg name="selection_ring_mesh_dir" default="" />
+   <xacro:include filename="$(find husky_description)/urdf/husky_macro.urdf.xacro" />
++  <xacro:include filename="$(find husky_description)/urdf/selection_ring.urdf.xacro" />
+ 
+   <!-- Load husky description -->
+   <xacro:husky prefix="$(arg prefix)" />
+ 
++  <!-- Diablo-style selection ring (only on primary robot) -->
++  <xacro:if value="$(arg with_selection_ring)">
++    <xacro:selection_ring prefix="$(arg prefix)"
++                          mesh_dir="$(arg selection_ring_mesh_dir)" />
++  </xacro:if>
++
+ 
+   <xacro:if value="$(arg is_sim)">
+ 
+     <gazebo>
+-      <plugin name="$(arg prefix)gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+-        <parameters>$(arg gazebo_controllers)</parameters>
++      <plugin name="skid_steer_controller" filename="libgazebo_ros_diff_drive.so">
++        <ros>
++          <namespace>$(arg robot_namespace)</namespace>
++        </ros>
++        <update_rate>50</update_rate>
++        <num_wheel_pairs>2</num_wheel_pairs>
++        <left_joint>$(arg prefix)front_left_wheel_joint</left_joint>
++        <right_joint>$(arg prefix)front_right_wheel_joint</right_joint>
++        <left_joint>$(arg prefix)rear_left_wheel_joint</left_joint>
++        <right_joint>$(arg prefix)rear_right_wheel_joint</right_joint>
++        <wheel_separation>0.5709</wheel_separation>
++        <wheel_separation>0.5709</wheel_separation>
++        <wheel_diameter>0.3302</wheel_diameter>
++        <wheel_diameter>0.3302</wheel_diameter>
++        <max_wheel_torque>50.0</max_wheel_torque>
++        <max_wheel_acceleration>2.0</max_wheel_acceleration>
++        <publish_odom>true</publish_odom>
++        <publish_odom_tf>true</publish_odom_tf>
++        <publish_wheel_tf>false</publish_wheel_tf>
++        <odometry_frame>$(arg prefix)odom</odometry_frame>
++        <robot_base_frame>$(arg prefix)base_link</robot_base_frame>
+       </plugin>
+     </gazebo>
+ 
+     <gazebo reference="$(arg prefix)imu_link">
+       <sensor name="$(arg prefix)imu_sensor" type="imu">
+-      <plugin filename="libgazebo_ros_imu_sensor.so" name="$(arg prefix)imu_plugin">
++      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+           <ros>
+-            <namespace>$(arg prefix)</namespace>
++            <namespace>$(arg robot_namespace)</namespace>
+             <remapping>~/out:=imu/data_raw</remapping>
+           </ros>
+           <initial_orientation_as_reference>false</initial_orientation_as_reference>
+@@ -38,9 +67,9 @@
+ 
+     <gazebo reference="$(arg prefix)gps_link">
+       <sensor name="$(arg prefix)gps_sensor" type="gps">
+-      <plugin filename="libgazebo_ros_gps_sensor.so" name="$(arg prefix)gps_plugin">
++      <plugin filename="libgazebo_ros_gps_sensor.so" name="gps_plugin">
+           <ros>
+-            <namespace>$(arg prefix)</namespace>
++            <namespace>$(arg robot_namespace)</namespace>
+             <remapping>~/out:=gps/data</remapping>
+           </ros>
+         </plugin>
+diff --git a/husky_description/urdf/husky_macro.urdf.xacro b/husky_description/urdf/husky_macro.urdf.xacro
+index 4b7b5b7..3a2e32e 100644
+--- a/husky_description/urdf/husky_macro.urdf.xacro
++++ b/husky_description/urdf/husky_macro.urdf.xacro
+@@ -109,20 +109,20 @@
+ 
+ 
+     <!-- Husky wheel macros -->
+-    <xacro:husky_wheel wheel_prefix="${prefix}front_left">
++    <xacro:husky_wheel wheel_prefix="${prefix}front_left" prefix="${prefix}">
+       <origin xyz="${wheelbase/2} ${track/2} ${wheel_vertical_offset}" rpy="0 0 0" />
+     </xacro:husky_wheel>
+-    <xacro:husky_wheel wheel_prefix="${prefix}front_right">
++    <xacro:husky_wheel wheel_prefix="${prefix}front_right" prefix="${prefix}">
+       <origin xyz="${wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="0 0 0" />
+     </xacro:husky_wheel>
+-    <xacro:husky_wheel wheel_prefix="${prefix}rear_left">
++    <xacro:husky_wheel wheel_prefix="${prefix}rear_left" prefix="${prefix}">
+       <origin xyz="${-wheelbase/2} ${track/2} ${wheel_vertical_offset}" rpy="0 0 0" />
+     </xacro:husky_wheel>
+-    <xacro:husky_wheel wheel_prefix="${prefix}rear_right">
++    <xacro:husky_wheel wheel_prefix="${prefix}rear_right" prefix="${prefix}">
+       <origin xyz="${-wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="0 0 0" />
+     </xacro:husky_wheel>
+ 
+-    <xacro:husky_decorate />
++    <xacro:husky_decorate prefix="${prefix}"/>
+ 
+     <!-- <xacro:if value="$(arg laser_enabled)">
+ 
+@@ -161,12 +161,9 @@
+       <xacro:intel_realsense_mount prefix="camera" topic="realsense" parent_link="realsense_mountpoint"/>
+     </xacro:if>
+ 
++    <xacro:unless value="$(arg is_sim)">
+     <ros2_control name="${prefix}husky_hardware" type="system">
+       <hardware>
+-        <xacro:if value="$(arg is_sim)">
+-          <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+-        </xacro:if>
+-        <xacro:unless value="$(arg is_sim)">
+           <plugin>husky_base/HuskyHardware</plugin>
+           <plugin>fake_components/GenericSystem</plugin>
+           <param name="hw_start_duration_sec">2.0</param>
+@@ -176,7 +173,6 @@
+           <param name="max_speed">1.0</param>
+           <param name="polling_timeout">10.0</param>
+           <param name="serial_port">/dev/prolific</param>
+-        </xacro:unless>
+       </hardware>
+       <joint name="${prefix}front_left_wheel_joint">
+         <command_interface name="velocity">
+@@ -211,6 +207,7 @@
+         <state_interface name="velocity"/>
+       </joint>
+     </ros2_control>
++    </xacro:unless>
+ 
+   </xacro:macro>
+ 
+diff --git a/husky_description/urdf/selection_ring.urdf.xacro b/husky_description/urdf/selection_ring.urdf.xacro
+new file mode 100644
+index 0000000..f9625c4
+--- /dev/null
++++ b/husky_description/urdf/selection_ring.urdf.xacro
+@@ -0,0 +1,37 @@
++<?xml version="1.0"?>
++<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
++
++  <!--
++    Selection ring for the primary robot — Diablo-style HUD marker.
++
++    Attached to base_footprint so the ring sits exactly on ground level,
++    centred under the robot, regardless of base_link offset variations.
++
++    Uses a built-in Gazebo material name (Gazebo/Turquoise) for reliable
++    rendering — URDF rgba colours and custom emissives are unreliable
++    on mesh visuals in Gazebo Classic 11.
++
++    Visual only — no collision, no inertia.
++  -->
++  <xacro:macro name="selection_ring" params="prefix mesh_dir">
++    <link name="${prefix}selection_ring">
++      <visual>
++        <origin xyz="0 0 0.01" rpy="0 0 0"/>
++        <geometry>
++          <mesh filename="file://${mesh_dir}/selection_ring.stl"/>
++        </geometry>
++      </visual>
++    </link>
++
++    <gazebo reference="${prefix}selection_ring">
++      <material>Gazebo/Turquoise</material>
++    </gazebo>
++
++    <joint name="${prefix}selection_ring_joint" type="fixed">
++      <parent link="${prefix}base_footprint"/>
++      <child link="${prefix}selection_ring"/>
++      <origin xyz="0 0 0" rpy="0 0 0"/>
++    </joint>
++  </xacro:macro>
++
++</robot>
+diff --git a/husky_description/urdf/wheel.urdf.xacro b/husky_description/urdf/wheel.urdf.xacro
+index 148e939..55bf25e 100644
+--- a/husky_description/urdf/wheel.urdf.xacro
++++ b/husky_description/urdf/wheel.urdf.xacro
+@@ -1,8 +1,6 @@
+ <?xml version="1.0"?>
+-
+ <robot xmlns:xacro="http://ros.org/wiki/xacro" name="husky_wheel">
+-
+-  <xacro:macro name="husky_wheel" params="wheel_prefix *joint_pose">
++  <xacro:macro name="husky_wheel" params="wheel_prefix prefix:='' *joint_pose">
+     <link name="${wheel_prefix}_wheel">
+       <inertial>
+         <mass value="2.637" />
+@@ -22,7 +20,6 @@
+         </geometry>
+       </collision>
+     </link>
+-
+     <gazebo reference="${wheel_prefix}_wheel">
+       <mu1 value="1.0"/>
+       <mu2 value="0.5"/>
+@@ -30,13 +27,11 @@
+       <kd value="1.0" />
+       <fdir1 value="1 0 0"/>
+     </gazebo>
+-
+     <joint name="${wheel_prefix}_wheel_joint" type="continuous">
+-      <parent link="base_link"/>
++      <parent link="${prefix}base_link"/>
+       <child link="${wheel_prefix}_wheel"/>
+       <xacro:insert_block name="joint_pose"/>
+       <axis xyz="0 1 0" rpy="0 0 0" />
+     </joint>
+-
+   </xacro:macro>
+ </robot>
