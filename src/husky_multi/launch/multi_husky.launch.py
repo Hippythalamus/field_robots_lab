@@ -29,10 +29,15 @@ from pathlib import Path
 
 # Robot configuration: name, spawn position (x, y, yaw)
 ROBOTS = [
-    {'name': 'robot_1', 'x': 0.0,  'y':  0.0, 'yaw': 0.0},
-    {'name': 'robot_2', 'x': 0.0,  'y':  3.0, 'yaw': 0.0},
-    {'name': 'robot_3', 'x': 0.0,  'y': -3.0, 'yaw': 0.0},
+    {'name': 'robot_1', 'x': 0.0,  'y':  0.0, 'yaw': 0.0, 'selection_ring': True},
+    {'name': 'robot_2', 'x': 0.0,  'y':  3.0, 'yaw': 0.0, 'selection_ring': False},
+    {'name': 'robot_3', 'x': 0.0,  'y': -3.0, 'yaw': 0.0, 'selection_ring': False},
 ]
+
+# Path to STL meshes for the Diablo-style selection ring (set at launch time)
+DIABLO_MESH_DIR = str(
+    Path(get_package_share_directory('diablo_visuals')) / 'meshes'
+)
 
 
 def make_robot_group(robot, gazebo_started):
@@ -44,6 +49,7 @@ def make_robot_group(robot, gazebo_started):
     config_file = PathJoinSubstitution(
         [FindPackageShare("husky_multi"), "config", f"control_{name}.yaml"]
     )
+
 
     # Generate URDF via xacro with prefix AND robot_namespace AND explicit config
     robot_description_content = Command(
@@ -62,6 +68,10 @@ def make_robot_group(robot, gazebo_started):
             " ",
             "gazebo_controllers:=",
             config_file,
+            " ",
+            f"with_selection_ring:={'true' if robot.get('selection_ring') else 'false'}",
+            " ",
+            f"selection_ring_mesh_dir:={DIABLO_MESH_DIR}",
         ]
     )
     robot_description = {"robot_description": robot_description_content,

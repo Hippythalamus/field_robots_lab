@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="beam">
+    <static>true</static>
+    <link name="link">
+      <visual name="visual">
+        <pose>0 0 0 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>file://MESH_DIR/beam.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>COLOR_R COLOR_G COLOR_B 0.55</ambient>
+          <diffuse>COLOR_R COLOR_G COLOR_B 0.55</diffuse>
+          <specular>0.2 0.2 0.2 1.0</specular>
+          <emissive>COLOR_R COLOR_G COLOR_B 1.0</emissive>
+        </material>
+        <cast_shadows>false</cast_shadows>
+      </visual>
+    </link>
+  </model>
+</sdf>

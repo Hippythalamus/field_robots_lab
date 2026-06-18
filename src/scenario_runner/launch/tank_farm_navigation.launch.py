@@ -131,4 +131,15 @@ def generate_launch_description():
         )
         actions.append(navigator)
 
+
+    # Diablo-style visual markers — listens to robot_1 inspection events
+    diablo = Node(
+        package="diablo_visuals",
+        executable="diablo_visuals",
+        name="diablo_visuals",
+        output="screen",
+        parameters=[{"robot_namespace": "robot_1"}],
+    )
+    actions.append(diablo)
+
     return LaunchDescription(actions)
